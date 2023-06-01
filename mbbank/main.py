@@ -22,26 +22,26 @@ headers_default = {
 def get_now_time():
     now = datetime.datetime.now()
     microsecond = int(now.strftime("%f")[:2])
-    return now.strftime(f"%Y%m%d%H%M{microsecond }")
+    return now.strftime(f"%Y%m%d%H%M{microsecond}")
 
 
 class MBBank:
-    
     deviceIdCommon = f'yeumtmdx-mbib-0000-0000-{get_now_time()}'
-    
+
     def __init__(self, *, username, password, tesseract_path=None):
-        self.userid = username
-        self.password = password
+        self.__userid = username
+        self.__password = password
         if tesseract_path is not None:
             pytesseract.pytesseract.tesseract_cmd = tesseract_path
         self.sessionId = None
         self._userinfo = None
         self._temp = {}
-        
-    
+
     async def _req(self, url, *, json={}, headers={}):
         while True:
-            rid = f"{self.userid}-{get_now_time()}"
+            if self.sessionId is None:
+                await self.authenticate()
+            rid = f"{self.__userid}-{get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
@@ -54,7 +54,7 @@ class MBBank:
                 async with s.post(url, headers=headers, json=json_data) as r:
                     data_out = await r.json()
             if data_out["result"] is None:
-                  await self.getBalance()
+                await self.getBalance()
             elif data_out["result"]["ok"]:
                 data_out.pop("result", None)
                 data_out.pop("refNo", None)
@@ -65,15 +65,26 @@ class MBBank:
                 err_out = data_out["result"]
                 raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
         return data_out
-    
+
     async def authenticate(self):
         while True:
             self._userinfo = None
             self.sessionId = None
             self._temp = {}
-            data_out = await self._req("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage")
-            imgbyte = io.BytesIO(base64.b64decode(data_out["imageString"]))
-            img = Image.open(imgbyte)
+            rid = f"{self.__userid}-{get_now_time()}"
+            json_data = {
+                'sessionId': "",
+                'refNo': rid,
+                'deviceIdCommon': self.deviceIdCommon,
+            }
+            headers = headers_default.copy()
+            headers["X-Request-Id"] = rid
+            async with aiohttp.ClientSession() as s:
+                async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
+                                  headers=headers, json=json_data) as r:
+                    data_out = await r.json()
+            img_byte = io.BytesIO(base64.b64decode(data_out["imageString"]))
+            img = Image.open(img_byte)
             img = img.convert('RGBA')
             pix = img.load()
             for y in range(img.size[1]):
@@ -85,18 +96,18 @@ class MBBank:
             text = pytesseract.image_to_string(img)
             text = re.sub(r"\s+", "", text, flags=re.MULTILINE)
             payload = {
-                "userId": self.userid,
-                "password": hashlib.md5(self.password.encode()).hexdigest(),
+                "userId": self.__userid,
+                "password": hashlib.md5(self.__password.encode()).hexdigest(),
                 "captcha": text,
                 'sessionId': "",
-                'refNo': f'{self.userid}-{get_now_time()}',
+                'refNo': f'{self.__userid}-{get_now_time()}',
                 'deviceIdCommon': self.deviceIdCommon,
             }
-
             async with aiohttp.ClientSession() as s:
-                async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin", headers=headers_default, json=payload) as r:
+                async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
+                                  headers=headers_default, json=payload) as r:
                     data_out = await r.json()
-                    
+
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]
                 self._userinfo = data_out
@@ -109,53 +120,109 @@ class MBBank:
 
     async def getTransactionAccountHistory(self, *, from_date: datetime.datetime, to_date: datetime.datetime):
         json_data = {
-            'accountNo': self.userid,
+            'accountNo': self.__userid,
             'fromDate': from_date.strftime("%d/%m/%Y"),
-            'toDate': to_date.strftime("%d/%m/%Y"), # max 3 months
+            'toDate': to_date.strftime("%d/%m/%Y"),  # max 3 months
         }
-
-        data_out = await self._req("https://online.mbbank.com.vn/retail-web-transactionservice/transaction/getTransactionAccountHistory", json=json_data)
+        data_out = await self._req(
+            "https://online.mbbank.com.vn/retail-web-transactionservice/transaction/getTransactionAccountHistory",
+            json=json_data)
         return data_out
 
     async def getBalance(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
         return data_out
-    
+
     async def getBalanceLoyalty(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
         return data_out
-    
-    async def getInterestRate(self, currency:str ="VND"):
+
+    async def getInterestRate(self, currency: str = "VND"):
         json_data = {
             "productCode": "TIENGUI.KHN.EMB",
             "currency": currency,
         }
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getInterestRate", json=json_data)
         return data_out
-    
+
     async def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"], searchType: typing.Literal["MOST", "LATEST"]):
         json_data = {
             "transactionType": transactionType,
             "searchType": searchType
         }
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/internetbanking/getFavorBeneficiaryList", json=json_data)
+        data_out = await self._req(
+            "https://online.mbbank.com.vn/api/retail_web/internetbanking/getFavorBeneficiaryList", json=json_data)
         return data_out
-    
+
     async def getCardList(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/card/getList")
         return data_out
-    
+
     async def getSavingList(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
         return data_out
-    
+
     async def getLoanList(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/loan/getList")
         return data_out
-    
+
     async def userinfo(self):
         if self._userinfo is None:
             await self.authenticate()
         else:
             await self.getBalance()
         return self._userinfo
+
+    async def getBankList(self):
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        return data_out
+
+    async def inquiryAccountName(self, *, typeTransfer:str=None, debitAccount:str, bankCode:str=None, creditAccount:str, creditAccountType: typing.Literal["ACCOUNT", "CARD"]):
+        creditCardNo = None
+        if (bankCode is None or typeTransfer is None ) and creditAccountType != "CARD":
+            raise TypeError("creditAccount must be \"CARD\" so bankCode or typeTransfer can be None")
+        elif creditAccountType == "CARD":
+            out = await self.getBankList()
+            for i in out['listBank']:
+                bankCode = None
+                typeTransfer = None
+                if creditAccount.startswith(i["smlCode"]):
+                    bankCode = i["smlCode"]
+                    typeTransfer = i["typeTransfer"]
+                    datacard = await self.cardGenerateID(creditAccount)
+                    creditCardNo = datacard["cardNumber"]
+                    creditAccount = datacard["cardID"]
+                    break
+            if bankCode is None or typeTransfer is None:
+                raise Exception(f"Invaild card")
+            elif not creditAccount:
+                raise Exception(f"Card not exist")
+        json_data = {
+            "creditAccount": creditAccount,
+            "creditAccountType": creditAccountType,
+            "bankCode": bankCode,
+            "debitAccount": debitAccount,
+            "type": typeTransfer,
+            "remark": "",
+        }
+        if creditCardNo is not None:
+            json_data.setdefault("creditCardNo", creditCardNo)
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/transfer/inquiryAccountName", json=json_data)
+        return data_out
+
+    async def getServiceToken(self):
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
+        return data_out
+
+    async def cardGenerateID(self, cardNumber:str):
+        headers = headers_default.copy()
+        json_data = {
+          "requestID": f"{self.__userid}-{get_now_time()}",
+          "cardNumber": cardNumber
+        }
+        tok = await self.getServiceToken()
+        headers["Authorization"] = tok["type"].capitalize() + " " + tok["token"]
+        async with aiohttp.ClientSession() as s:
+            async with s.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid", headers=headers, json=json_data) as r:
+               return await r.json()
+

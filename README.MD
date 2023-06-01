@@ -33,10 +33,28 @@ async def main():
     await mb.getSavingList()
     await mb.getLoanList()
     await mb.userinfo()
+    
+    # get user name for tranfer money
+    
+    bankList = await mb.getBankList()
+    for i in bankList["listBank"]:
+        if i["bankId"] == "MB":
+            mbbankid = i
+            break
+    # get name by Account nuber
+    await mb.inquiryAccountName(typeTransfer=mbbankid["typeTransfer"], bankCode=mbbankid["smlCode"], creditAccountType="ACCOUNT", debitAccount="your Account nuber", creditAccount="Account you what to get name")
+    # get name by Card nuber (napas)
+    await mb.inquiryAccountName(creditAccountType="CARD", debitAccount="your Account nuber", creditAccount="Account you what to get name")
+
 
 
 asyncio.run(main())
 ```
 and all this is return json for you have full control your data
- 
+
+
+## TODO
+
+- [ ] add tranfer money
+
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fthedtvn%2FMBBank&count_bg=%2379C83D&title_bg=%23555555&icon=python.svg&icon_color=%23E7E7E7&title=Views+Counter&edge_flat=false)
