@@ -234,4 +234,5 @@ class MBBank:
     # some note for "makeTransfer" pram otp
     # ibr|<createTransactionAuthen ransactionAuthen custId>||<dotp code>||<unix time>|<createTransactionAuthen ransactionAuthen id>|<createTransactionAuthen refNo>
     # and custId for createTransactionAuthen get from _userinfo
+    # dopt qr is "TRANID| createTransactionAuthen transactionAuthen id"
 
