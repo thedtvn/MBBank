@@ -45,7 +45,8 @@ async def main():
     await mb.inquiryAccountName(typeTransfer=mbbankid["typeTransfer"], bankCode=mbbankid["smlCode"], creditAccountType="ACCOUNT", debitAccount="your Account nuber", creditAccount="Account you what to get name")
     # get name by Card nuber (napas)
     await mb.inquiryAccountName(creditAccountType="CARD", debitAccount="your Account nuber", creditAccount="Account you what to get name")
-
+    # get mbbank Account name by phone nuber
+    await mb.getAccountByPhone("Account you what to get name")
 
 
 asyncio.run(main())

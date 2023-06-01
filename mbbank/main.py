@@ -57,7 +57,6 @@ class MBBank:
                 await self.getBalance()
             elif data_out["result"]["ok"]:
                 data_out.pop("result", None)
-                data_out.pop("refNo", None)
                 break
             elif data_out["result"]["responseCode"] == "GW200":
                 await self.authenticate()
@@ -107,7 +106,6 @@ class MBBank:
                 async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
                                   headers=headers_default, json=payload) as r:
                     data_out = await r.json()
-
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]
                 self._userinfo = data_out
@@ -225,4 +223,15 @@ class MBBank:
         async with aiohttp.ClientSession() as s:
             async with s.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid", headers=headers, json=json_data) as r:
                return await r.json()
+
+    async def getAccountByPhone(self, phone:str):
+        json_data = {
+          "phone": phone
+        }
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone", json=json_data)
+        return data_out
+
+    # some note for "makeTransfer" pram otp
+    # ibr|<createTransactionAuthen ransactionAuthen custId>||<dotp code>||<unix time>|<createTransactionAuthen ransactionAuthen id>|<createTransactionAuthen refNo>
+    # and custId for createTransactionAuthen get from _userinfo
 
