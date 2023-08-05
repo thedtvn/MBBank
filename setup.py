@@ -1,8 +1,5 @@
 import re
-import os
 from setuptools import setup
-
-print(os.listdir("."))
 
 with open("req.txt", "r") as f:
     req = f.read().splitlines()
