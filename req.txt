@@ -1,5 +1,4 @@
 Pillow
+requests
 pytesseract
 aiohttp
-python-dotenv
-aiohttp-session

@@ -1,5 +1,10 @@
 # MBBank API for Python
 A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" account
+
+## why we  have this lib ?
+
+Because I don't want to lose money on some api services like [casso.vn](https://casso.vn/)
+
 ## Requires
    [tesseract (windows)](https://github.com/UB-Mannheim/tesseract/wiki)
     
@@ -15,13 +20,34 @@ A unofficially light weight Python Api for the "Military Commercial Joint Stock 
     pip install git+https://github.com/thedtvn/MBBank
 
 ## How to Use
+
+### sync
+```py
+import datetime
+import mbbank
+
+mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
+daynow = datetime.datetime.now()
+lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
+mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow)
+mb.getBalance()
+mb.getBalanceLoyalty()
+mb.getInterestRate()
+mb.getFavorBeneficiaryList(transactionType= "TRANSFER" or "PAYMENT", searchType="MOST" or "LATEST")
+mb.getCardList()
+mb.getSavingList()
+mb.getLoanList()
+mb.userinfo()
+```
+
+### async
 ```py
 import asyncio
-import mbbank
+from mbbank import mb_async as mbbank
 import datetime
 
 async def main():
-    mb = mbbank.MbBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
+    mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
     daynow = datetime.datetime.now()
     lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
     await mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow)
@@ -33,29 +59,9 @@ async def main():
     await mb.getSavingList()
     await mb.getLoanList()
     await mb.userinfo()
-    
-    # get user name for tranfer money
-    
-    bankList = await mb.getBankList()
-    for i in bankList["listBank"]:
-        if i["bankId"] == "MB":
-            mbbankid = i
-            break
-    # get name by Account nuber
-    await mb.inquiryAccountName(typeTransfer=mbbankid["typeTransfer"], bankCode=mbbankid["smlCode"], creditAccountType="ACCOUNT", debitAccount="your Account nuber", creditAccount="Account you what to get name")
-    # get name by Card nuber (napas)
-    await mb.inquiryAccountName(creditAccountType="CARD", debitAccount="your Account nuber", creditAccount="Account you what to get name")
-    # get mbbank Account name by phone nuber
-    await mb.getAccountByPhone("Account you what to get name")
-
 
 asyncio.run(main())
 ```
 and all this is return json for you have full control your data
-
-
-## TODO
-
-- [ ] add tranfer money
 
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fthedtvn%2FMBBank&count_bg=%2379C83D&title_bg=%23555555&icon=python.svg&icon_color=%23E7E7E7&title=Views+Counter&edge_flat=false)

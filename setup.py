@@ -6,9 +6,12 @@ with open("req.txt", "r") as f:
 with open("README.MD", "r") as f:
     ldr = f.read()
 
+with open('mbbank/__init__.py') as f:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
+
 setup(
    name='mbbank-lib',
-   version="0.0.2",
+   version=version,
    license="Apache License, Version 2.0",
    description='A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" accounts',
    long_description=ldr,
