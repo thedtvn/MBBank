@@ -1,13 +1,13 @@
 import re
 from setuptools import setup
 
-with open("req.txt", "r") as f:
+with open("./req.txt", "r") as f:
     req = f.read().splitlines()
     
-with open("README.MD", "r") as f:
+with open("./README.MD", "r") as f:
     ldr = f.read()
 
-with open('mbbank/__init__.py') as f:
+with open('./mbbank/__init__.py') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
 
 setup(
