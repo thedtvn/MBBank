@@ -120,7 +120,7 @@ class MBBank:
                 err_out = data_out["result"]
                 raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
 
-    def getTransactionAccountHistory(self, *, from_date: datetime.datetime, to_date: datetime.datetime):
+    def getTransactionAccountHistory(self, *, accountNo:str=None, from_date: datetime.datetime, to_date: datetime.datetime):
         json_data = {
             'accountNo': self.__userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
