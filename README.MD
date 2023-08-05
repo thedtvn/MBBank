@@ -29,7 +29,7 @@ import mbbank
 mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
 daynow = datetime.datetime.now()
 lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
-mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow)
+mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow [, accountNo="<sub account number default is main account number>"])
 mb.getBalance()
 mb.getBalanceLoyalty()
 mb.getInterestRate()
@@ -50,7 +50,7 @@ async def main():
     mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
     daynow = datetime.datetime.now()
     lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
-    await mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow)
+    await mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow [, accountNo="<sub account number default is main account number>"])
     await mb.getBalance()
     await mb.getBalanceLoyalty()
     await mb.getInterestRate()

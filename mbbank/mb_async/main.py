@@ -116,9 +116,9 @@ class MBBank:
                 err_out = data_out["result"]
                 raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
 
-    async def getTransactionAccountHistory(self, *, from_date: datetime.datetime, to_date: datetime.datetime):
+    async def getTransactionAccountHistory(self, *, accountNo:str=None, from_date: datetime.datetime, to_date: datetime.datetime):
         json_data = {
-            'accountNo': self.__userid,
+            'accountNo': self.__userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
             'toDate': to_date.strftime("%d/%m/%Y"),  # max 3 months
         }
