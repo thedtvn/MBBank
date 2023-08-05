@@ -1,3 +1,4 @@
+import re
 from setuptools import setup
 
 with open("req.txt", "r") as f:
