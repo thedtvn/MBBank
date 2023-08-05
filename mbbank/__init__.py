@@ -1,4 +1,4 @@
 from .main import MBBank
-from .mb_async import main as mb_async
+from .mb_async import MBBankAsync
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'

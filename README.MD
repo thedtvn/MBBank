@@ -43,11 +43,11 @@ mb.userinfo()
 ### async
 ```py
 import asyncio
-from mbbank import mb_async as mbbank
+import mbbank
 import datetime
 
 async def main():
-    mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
+    mb = mbbank.MBBankAsync(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
     daynow = datetime.datetime.now()
     lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
     await mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow [, accountNo="<sub account number default is main account number>"])
