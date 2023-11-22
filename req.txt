@@ -2,3 +2,4 @@ Pillow
 requests
 pytesseract
 aiohttp
+setuptools
