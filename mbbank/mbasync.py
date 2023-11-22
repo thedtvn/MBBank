@@ -116,7 +116,8 @@ class MBBankAsync:
                 err_out = data_out["result"]
                 raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
 
-    async def getTransactionAccountHistory(self, *, accountNo:str=None, from_date: datetime.datetime, to_date: datetime.datetime):
+    async def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
+                                           to_date: datetime.datetime):
         json_data = {
             'accountNo': self.__userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
@@ -143,7 +144,8 @@ class MBBankAsync:
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getInterestRate", json=json_data)
         return data_out
 
-    async def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"], searchType: typing.Literal["MOST", "LATEST"]):
+    async def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"],
+                                      searchType: typing.Literal["MOST", "LATEST"]):
         json_data = {
             "transactionType": transactionType,
             "searchType": searchType
@@ -175,9 +177,10 @@ class MBBankAsync:
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
         return data_out
 
-    async def inquiryAccountName(self, *, typeTransfer:str=None, debitAccount:str, bankCode:str=None, creditAccount:str, creditAccountType: typing.Literal["ACCOUNT", "CARD"]):
+    async def inquiryAccountName(self, *, typeTransfer: str = None, debitAccount: str, bankCode: str = None,
+                                 creditAccount: str, creditAccountType: typing.Literal["ACCOUNT", "CARD"]):
         creditCardNo = None
-        if (bankCode is None or typeTransfer is None ) and creditAccountType != "CARD":
+        if (bankCode is None or typeTransfer is None) and creditAccountType != "CARD":
             raise TypeError("creditAccount must be \"CARD\" so bankCode or typeTransfer can be None")
         elif creditAccountType == "CARD":
             out = await self.getBankList()
@@ -205,34 +208,44 @@ class MBBankAsync:
         }
         if creditCardNo is not None:
             json_data.setdefault("creditCardNo", creditCardNo)
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/transfer/inquiryAccountName", json=json_data)
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/transfer/inquiryAccountName",
+                                   json=json_data)
         return data_out
 
     async def getServiceToken(self):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
         return data_out
 
-    async def cardGenerateID(self, cardNumber:str):
+    async def cardGenerateID(self, cardNumber: str):
         headers = headers_default.copy()
         json_data = {
-          "requestID": f"{self.__userid}-{get_now_time()}",
-          "cardNumber": cardNumber
+            "requestID": f"{self.__userid}-{get_now_time()}",
+            "cardNumber": cardNumber
         }
         tok = await self.getServiceToken()
         headers["Authorization"] = tok["type"].capitalize() + " " + tok["token"]
         async with aiohttp.ClientSession() as s:
-            async with s.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid", headers=headers, json=json_data) as r:
-               return await r.json()
+            async with s.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid",
+                              headers=headers, json=json_data) as r:
+                return await r.json()
 
-    async def getAccountByPhone(self, phone:str):
+    async def getAccountByPhone(self, phone: str):
         json_data = {
-          "phone": phone
+            "phone": phone
         }
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone", json=json_data)
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone",
+                                   json=json_data)
         return data_out
 
-    # some note for "makeTransfer" pram otp
-    # ibr|<createTransactionAuthen ransactionAuthen custId>||<dotp code>||<unix time>|<createTransactionAuthen ransactionAuthen id>|<createTransactionAuthen refNo>
-    # and custId for createTransactionAuthen get from _userinfo
-    # dopt qr is "TRANID| createTransactionAuthen transactionAuthen id"
-
+    async def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime):
+        json_data = {
+            "accountNo": cardNo,
+            "fromDate": from_date.strftime("%d/%m/%Y"),
+            "toDate": to_date.strftime("%d/%m/%Y"),  # max 3 months
+            "historyNumber": "",
+            "historyType": "DATE_RANGE",
+            "type": "CARD",
+        }
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getTransactionHistory",
+                                   json=json_data)
+        return data_out

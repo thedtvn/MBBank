@@ -169,6 +169,18 @@ class MBBank:
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loan/getList")
         return data_out
 
+    def getCardTransactionHistory(self, cardNo:str, from_date: datetime.datetime, to_date: datetime.datetime):
+        json_data = {
+          "accountNo": cardNo,
+          "fromDate": from_date.strftime("%d/%m/%Y"),
+          "toDate": to_date.strftime("%d/%m/%Y"),  # max 3 months
+          "historyNumber": "",
+          "historyType": "DATE_RANGE",
+          "type": "CARD",
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getTransactionHistory", json=json_data)
+        return data_out
+
     def userinfo(self):
         if self._userinfo is None:
             self.authenticate()
