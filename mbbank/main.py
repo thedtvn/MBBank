@@ -26,7 +26,7 @@ def get_now_time():
 
 
 class MBBank:
-    deviceIdCommon = f'yeumtmdx-mbib-0000-0000-{get_now_time()}'
+    deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
 
     def __init__(self, *, username, password, tesseract_path=None):
         self.__userid = username
@@ -54,6 +54,8 @@ class MBBank:
             json_data.update(json)
             headers.update(headers_default)
             headers["X-Request-Id"] = rid
+            headers["RefNo"] = rid
+            headers["DeviceId"] = self.deviceIdCommon
             with requests.Session() as s:
                 with s.post(url, headers=headers, json=json_data) as r:
                     data_out = r.json()
@@ -127,7 +129,7 @@ class MBBank:
             'toDate': to_date.strftime("%d/%m/%Y"),  # max 3 months
         }
         data_out = self._req(
-            "https://online.mbbank.com.vn/retail-web-transactionservice/transaction/getTransactionAccountHistory",
+            "https://online.mbbank.com.vn/api/retail-transactionms/transactionms/get-account-transaction-history",
             json=json_data)
         return data_out
 
