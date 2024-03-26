@@ -20,5 +20,6 @@ setup(
    url='https://github.com/thedtvn/MBBank',
    author='The DT',
    packages=["mbbank"],
-   install_requires=req
+   install_requires=req,
+   include_package_data=True
 )
