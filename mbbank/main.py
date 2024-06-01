@@ -25,7 +25,25 @@ def get_now_time():
     return now.strftime(f"%Y%m%d%H%M{microsecond}")
 
 
+class MBBankError(Exception):
+    def __init__(self, err_out):
+        self.code = err_out['responseCode']
+        self.message = err_out['message']
+        super().__init__(f"{err_out['responseCode']} | {err_out['message']}")
+
+
 class MBBank:
+    """Core class
+
+    Attributes:
+        deviceIdCommon (str): Device id common
+        sessionId (str or None): Current Session id
+
+    Args:
+        username (str): MBBank Account Username
+        password (str): MBBank Account Password
+        tesseract_path (str, optional): Tesseract path. Defaults to None.
+    """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
 
     def __init__(self, *, username, password, tesseract_path=None):
@@ -44,7 +62,7 @@ class MBBank:
             json = {}
         while True:
             if self.sessionId is None:
-                self.authenticate()
+                self._authenticate()
             rid = f"{self.__userid}-{get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
@@ -65,13 +83,13 @@ class MBBank:
                 data_out.pop("result", None)
                 break
             elif data_out["result"]["responseCode"] == "GW200":
-                self.authenticate()
+                self._authenticate()
             else:
                 err_out = data_out["result"]
-                raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
+                raise MBBankError(err_out)
         return data_out
 
-    def authenticate(self):
+    def _authenticate(self):
         while True:
             self._userinfo = None
             self.sessionId = None
@@ -122,7 +140,26 @@ class MBBank:
                 err_out = data_out["result"]
                 raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
 
-    def getTransactionAccountHistory(self, *, accountNo:str=None, from_date: datetime.datetime, to_date: datetime.datetime):
+    def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
+                                     to_date: datetime.datetime):
+        """
+        Get account transaction history
+
+        Args:
+            accountNo (str, optional): Sub account number Defaults to Main Account number.
+            from_date (datetime.datetime): transaction from date
+            to_date (datetime.datetime): transaction to date
+
+        Returns:
+            success (dict): account transaction history
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        if self._userinfo is None:
+            self._authenticate()
+        if accountNo is None:
+            accountNo = self._userinfo["result"]["data"]["accountNo"]
         json_data = {
             'accountNo': self.__userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
@@ -134,14 +171,46 @@ class MBBank:
         return data_out
 
     def getBalance(self):
+        """
+        Get all main account and sub account balance
+
+        Returns:
+            success (dict): list account balance
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        if self._userinfo is None:
+            self._authenticate()
         data_out = self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
         return data_out
 
     def getBalanceLoyalty(self):
+        """
+        Get Account loyalty rank and Member loyalty point
+
+        Returns:
+            success (dict): loyalty point
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
         return data_out
 
     def getInterestRate(self, currency: str = "VND"):
+        """
+        Get saving interest rate
+
+        Args:
+            currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Viet Nam Dong).
+
+        Returns:
+            success (dict): interest rate
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         json_data = {
             "productCode": "TIENGUI.KHN.EMB",
             "currency": currency,
@@ -151,6 +220,19 @@ class MBBank:
 
     def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"],
                                 searchType: typing.Literal["MOST", "LATEST"]):
+        """
+        Get all favor or most transfer beneficiary list from your account
+
+        Args:
+            transactionType (Literal["TRANSFER", "PAYMENT"]): transaction type
+            searchType (Literal["MOST", "LATEST"]): search type
+
+        Returns:
+            success (dict): favor beneficiary list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         json_data = {
             "transactionType": transactionType,
             "searchType": searchType
@@ -160,32 +242,82 @@ class MBBank:
         return data_out
 
     def getCardList(self):
+        """
+        Get all card list from your account
+
+        Returns:
+            success (dict): card list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/card/getList")
         return data_out
 
     def getSavingList(self):
+        """
+        Get all saving list from your account
+
+        Returns:
+            success (dict): saving list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
         return data_out
 
     def getLoanList(self):
+        """
+        Get all loan list from your account
+
+        Returns:
+            success (dict): loan list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loan/getList")
         return data_out
 
-    def getCardTransactionHistory(self, cardNo:str, from_date: datetime.datetime, to_date: datetime.datetime):
+    def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime):
+        """
+        Get card transaction history
+
+        Args:
+            cardNo (str): card number get from getCardList
+            from_date (datetime.datetime): from date
+            to_date (datetime.datetime): to date
+
+        Returns:
+            success (dict): card transaction history
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         json_data = {
-          "accountNo": cardNo,
-          "fromDate": from_date.strftime("%d/%m/%Y"),
-          "toDate": to_date.strftime("%d/%m/%Y"),  # max 3 months
-          "historyNumber": "",
-          "historyType": "DATE_RANGE",
-          "type": "CARD",
+            "accountNo": cardNo,
+            "fromDate": from_date.strftime("%d/%m/%Y"),
+            "toDate": to_date.strftime("%d/%m/%Y"),  # max 3 months
+            "historyNumber": "",
+            "historyType": "DATE_RANGE",
+            "type": "CARD",
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getTransactionHistory", json=json_data)
         return data_out
 
     def userinfo(self):
+        """
+        Get current user info
+
+        Returns:
+            success (dict): user info
+
+        Raises:
+            MBBankError: if api response not ok
+        """
         if self._userinfo is None:
-            self.authenticate()
+            self._authenticate()
         else:
             self.getBalance()
         return self._userinfo

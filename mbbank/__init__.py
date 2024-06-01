@@ -1,4 +1,4 @@
-from .main import MBBank
+from .main import MBBank, MBBankError
 from .mbasync import MBBankAsync
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'

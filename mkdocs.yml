@@ -1,0 +1,22 @@
+site_name: MBBank
+
+repo_url: https://github.com/thedtvn/MBBank
+
+nav:
+  - Introduction: 'index.md'
+  - 'API Documentation':
+    - "Async API": 'api_document/async_api.md'
+    - "Sync API": 'api_document/sync_api.md'
+
+exclude_docs: |
+  req.*
+  *.py
+
+extra_css:
+  - css/main.css
+
+markdown_extensions:
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true

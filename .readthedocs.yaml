@@ -1,0 +1,26 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.11"
+  commands:
+    - pip install pip-tools
+    - pip-compile '.\docs\req.in'
+    - pip install -r docs/req.txt
+    - python setup.py install
+    - cd docs && python gen_doc.py
+
+mkdocs:
+  configuration: mkdocs.yml
+
+# Optionally declare the Python requirements required to build your docs
+python:
+   install:
+   - requirements: docs/req.txt
