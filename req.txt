@@ -1,6 +1,6 @@
 Pillow
 requests
 pytesseract
-aiohttp
+aiohttp==3.8.2
 setuptools
 wheel
