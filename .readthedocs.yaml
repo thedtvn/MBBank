@@ -12,10 +12,10 @@ build:
     python: "3.11"
   commands:
     - pip install pip-tools
-    - pip-compile '.\docs\req.in'
+    - pip-compile docs/req.in
     - pip install -r docs/req.txt
     - python setup.py install
-    - cd docs && python gen_doc.py
+    - python docs/gen_doc.py
 
 mkdocs:
   configuration: mkdocs.yml
