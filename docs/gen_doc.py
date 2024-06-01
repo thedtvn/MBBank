@@ -1,4 +1,6 @@
 import asyncio
+import os
+
 from griffe.dataclasses import Docstring
 from griffe.enumerations import DocstringSectionKind
 from mbbank import MBBank, MBBankAsync
@@ -81,6 +83,9 @@ def from_list_to_md(doc_list):
     return "\n".join(str_out)
 
 
+if "api_document" not in os.listdir("./docs"):
+    os.mkdir("./docs/api_document")
+
 with open("./docs/api_document/sync_api.md", "w") as f:
     data = from_list_to_md(parse_doc(MBBank))
     f.write(data)
@@ -88,5 +93,3 @@ with open("./docs/api_document/sync_api.md", "w") as f:
 with open("./docs/api_document/async_api.md", "w") as f:
     data = from_list_to_md(parse_doc(MBBankAsync))
     f.write(data)
-
-

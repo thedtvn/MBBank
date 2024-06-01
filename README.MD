@@ -12,7 +12,6 @@ what you need  that it use this lib to make your own code so you can use it free
    [tesseract (windows)](https://github.com/UB-Mannheim/tesseract/wiki)
     
    [tesseract (Linux & Mac)](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
- 
 
    and python3
  
@@ -22,52 +21,9 @@ what you need  that it use this lib to make your own code so you can use it free
    
     pip install git+https://github.com/thedtvn/MBBank
 
-## How to Use
+## Documentation
 
-### sync
-```py
-import datetime
-import mbbank
-
-mb = mbbank.MBBank(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
-daynow = datetime.datetime.now()
-lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
-mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow [, accountNo="<sub account number default is main account number>"])
-mb.getCardTransactionHistory(cardNo="<get `cardNo` key from card json obj in `getCardList`>", from_date=lasttime, to_date=daynow)
-mb.getBalance()
-mb.getBalanceLoyalty()
-mb.getInterestRate()
-mb.getFavorBeneficiaryList(transactionType= "TRANSFER" or "PAYMENT", searchType="MOST" or "LATEST")
-mb.getCardList()
-mb.getSavingList()
-mb.getLoanList()
-mb.userinfo()
-```
-
-### async
-```py
-import asyncio
-import mbbank
-import datetime
-
-async def main():
-    mb = mbbank.MBBankAsync(username="<account number>", password="<account password>" [, tesseract_path="path/to/tesseract"])
-    daynow = datetime.datetime.now()
-    lasttime = daynow - datetime.timedelta(weeks=4*3) # maximum time 3 Month
-    await mb.getTransactionAccountHistory(from_date=lasttime, to_date=daynow [, accountNo="<sub account number default is main account number>"])
-    await mb.getCardTransactionHistory(cardNo="<get `cardNo` key from card json obj in `getCardList`>", from_date=lasttime, to_date=daynow)
-    await mb.getBalance()
-    await mb.getBalanceLoyalty()
-    await mb.getInterestRate()
-    await mb.getFavorBeneficiaryList(transactionType= "TRANSFER" or "PAYMENT", searchType="MOST" or "LATEST")
-    await mb.getCardList()
-    await mb.getSavingList()
-    await mb.getLoanList()
-    await mb.userinfo()
-
-asyncio.run(main())
-```
-and all this is return json for you have full control your data
+[Online Documentation](http://mbbank.rtfd.io/)
 
 ## Extra Info
 - Payment QR Code Generator
