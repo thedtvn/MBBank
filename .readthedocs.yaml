@@ -22,6 +22,7 @@ build:
     - pip install -r docs/req.txt
     - pip install .
     - python docs/gen_doc.py
+    - mkdocs build -d $READTHEDOCS_OUTPUT/html/
 
 mkdocs:
   configuration: mkdocs.yml
