@@ -12,6 +12,7 @@ build:
     python: "3.11"
   commands:
     - pip install pip-tools
+    - apt-get install -y python3-dev python3-setuptools git gcc
     - pip-compile docs/req.in
     - pip install -r docs/req.txt
     - python setup.py install
