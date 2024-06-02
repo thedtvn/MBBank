@@ -291,6 +291,37 @@ class MBBankAsync:
                                    json=json_data)
         return data_out
 
+    async def getBankList(self):
+        """
+        Get transfer all bank list
+
+        Returns:
+            success (dict): bank list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        return data_out
+
+    async def getAccountByPhone(self, phone: str):
+        """
+        Get transfer account info by phone (MBank internal account only)
+
+        Args:
+            phone (str): MBBank account phone number
+
+        Returns:
+            success (dict): account info
+
+        """
+        json_data = {
+            "phone": phone
+        }
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone",
+                                   json=json_data)
+        return data_out
+
     async def userinfo(self):
         """
         Get current user info
@@ -306,69 +337,3 @@ class MBBankAsync:
         else:
             await self.getBalance()
         return self._userinfo
-
-    # working on beta
-
-    async def getBankList(self):
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
-        return data_out
-
-    async def inquiryAccountName(self, *, typeTransfer: str = None, debitAccount: str, bankCode: str = None,
-                                 creditAccount: str, creditAccountType: typing.Literal["ACCOUNT", "CARD"]):
-        creditCardNo = None
-        if (bankCode is None or typeTransfer is None) and creditAccountType != "CARD":
-            raise TypeError("creditAccount must be \"CARD\" so bankCode or typeTransfer can be None")
-        elif creditAccountType == "CARD":
-            out = await self.getBankList()
-            for i in out['listBank']:
-                bankCode = None
-                typeTransfer = None
-                if creditAccount.startswith(i["smlCode"]):
-                    bankCode = i["smlCode"]
-                    typeTransfer = i["typeTransfer"]
-                    datacard = await self.cardGenerateID(creditAccount)
-                    creditCardNo = datacard["cardNumber"]
-                    creditAccount = datacard["cardID"]
-                    break
-            if bankCode is None or typeTransfer is None:
-                raise Exception(f"Invaild card")
-            elif not creditAccount:
-                raise Exception(f"Card not exist")
-        json_data = {
-            "creditAccount": creditAccount,
-            "creditAccountType": creditAccountType,
-            "bankCode": bankCode,
-            "debitAccount": debitAccount,
-            "type": typeTransfer,
-            "remark": "",
-        }
-        if creditCardNo is not None:
-            json_data.setdefault("creditCardNo", creditCardNo)
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/transfer/inquiryAccountName",
-                                   json=json_data)
-        return data_out
-
-    async def getServiceToken(self):
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
-        return data_out
-
-    async def cardGenerateID(self, cardNumber: str):
-        headers = headers_default.copy()
-        json_data = {
-            "requestID": f"{self.__userid}-{get_now_time()}",
-            "cardNumber": cardNumber
-        }
-        tok = await self.getServiceToken()
-        headers["Authorization"] = tok["type"].capitalize() + " " + tok["token"]
-        async with aiohttp.ClientSession() as s:
-            async with s.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid",
-                              headers=headers, json=json_data) as r:
-                return await r.json()
-
-    async def getAccountByPhone(self, phone: str):
-        json_data = {
-            "phone": phone
-        }
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone",
-                                   json=json_data)
-        return data_out

@@ -306,6 +306,36 @@ class MBBank:
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getTransactionHistory", json=json_data)
         return data_out
 
+    def getBankList(self):
+        """
+        Get transfer all bank list
+
+        Returns:
+            success (dict): bank list
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        return data_out
+
+    def getAccountByPhone(self, phone: str):
+        """
+        Get transfer account info by phone (MBank internal account only)
+
+        Args:
+            phone (str): MBBank account phone number
+
+        Returns:
+            success (dict): account info
+
+        """
+        json_data = {
+            "phone": phone
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone", json=json_data)
+        return data_out
+
     def userinfo(self):
         """
         Get current user info
