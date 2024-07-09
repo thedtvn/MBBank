@@ -1,3 +1,6 @@
+
+> Archive because issues #6 and will unarchive if have key or way to encryption data befor send
+
 # MBBank API for Python
 A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" account
 
