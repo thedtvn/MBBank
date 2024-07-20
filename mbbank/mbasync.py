@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 from PIL import Image
 import pytesseract
 import re
@@ -9,9 +11,11 @@ import io
 import platform
 import aiohttp
 from .main import MBBankError
+from .wasm_helper import wasm_encrypt
 
 headers_default = {
     'Cache-Control': 'no-cache',
+    "App": "MB_WEB",
     'Accept': 'application/json, text/plain, */*',
     'Authorization': 'Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm',
     'User-Agent': f'Mozilla/5.0 (X11; {platform.system()} {platform.processor()})',
@@ -19,6 +23,7 @@ headers_default = {
     "Referer": "https://online.mbbank.com.vn/"
 }
 
+pool = concurrent.futures.ThreadPoolExecutor()
 
 def get_now_time():
     now = datetime.datetime.now()
@@ -39,8 +44,10 @@ class MBBankAsync:
         tesseract_path (str, optional): Tesseract path. Defaults to None.
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
+    FPR = "c7a1beebb9400375bb187daa33de9659"
 
     def __init__(self, *, username, password, tesseract_path=None):
+        self.__wasm_cache = None
         self.__userid = username
         self.__password = password
         if tesseract_path is not None:
@@ -79,6 +86,13 @@ class MBBankAsync:
                 raise MBBankError(err_out)
         return data_out
 
+    async def _get_wasm_file(self):
+        if self.__wasm_cache is not None:
+            return self.__wasm_cache
+        async with aiohttp.ClientSession() as s:
+            async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default) as r:
+                self.__wasm_cache = await r.read()
+
     async def _authenticate(self):
         while True:
             self._userinfo = None
@@ -115,10 +129,14 @@ class MBBankAsync:
                 'sessionId': "",
                 'refNo': f'{self.__userid}-{get_now_time()}',
                 'deviceIdCommon': self.deviceIdCommon,
+                "ibAuthen2faString": self.FPR,
             }
+            wasm_bytes = await self._get_wasm_file()
+            loop = asyncio.get_running_loop()
+            dataEnc = await loop.run_in_executor(pool, wasm_encrypt, self.__wasm_cache, payload)
             async with aiohttp.ClientSession() as s:
                 async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                                  headers=headers_default, json=payload) as r:
+                                  headers=headers_default, json={"dataEnc": dataEnc}) as r:
                     data_out = await r.json()
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]

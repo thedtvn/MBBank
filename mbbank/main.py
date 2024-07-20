@@ -8,10 +8,12 @@ import typing
 import io
 import platform
 import requests
+from .wasm_helper import wasm_encrypt
 
 headers_default = {
     'Cache-Control': 'no-cache',
     'Accept': 'application/json, text/plain, */*',
+    "App": "MB_WEB",
     'Authorization': 'Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm',
     'User-Agent': f'Mozilla/5.0 (X11; {platform.system()} {platform.processor()})',
     "Origin": "https://online.mbbank.com.vn",
@@ -45,10 +47,12 @@ class MBBank:
         tesseract_path (str, optional): Tesseract path. Defaults to None.
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
+    FPR = "c7a1beebb9400375bb187daa33de9659"
 
     def __init__(self, *, username, password, tesseract_path=None):
         self.__userid = username
         self.__password = password
+        self.__wasm_cache = None
         if tesseract_path is not None:
             pytesseract.pytesseract.tesseract_cmd = tesseract_path
         self.sessionId = None
@@ -89,6 +93,12 @@ class MBBank:
                 raise MBBankError(err_out)
         return data_out
 
+    def _get_wasm_file(self):
+        if self.__wasm_cache is not None:
+            return self.__wasm_cache
+        file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default).content
+        self.__wasm_cache = file_data
+
     def _authenticate(self):
         while True:
             self._userinfo = None
@@ -125,10 +135,13 @@ class MBBank:
                 'sessionId': "",
                 'refNo': f'{self.__userid}-{get_now_time()}',
                 'deviceIdCommon': self.deviceIdCommon,
+                "ibAuthen2faString": self.FPR,
             }
+            wasm_bytes = self._get_wasm_file()
+            dataEnc = wasm_encrypt(self.__wasm_cache, payload)
             with requests.Session() as s:
                 with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                            headers=headers_default, json=payload) as r:
+                            headers=headers_default, json={"dataEnc": dataEnc}) as r:
                     data_out = r.json()
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]
@@ -316,7 +329,7 @@ class MBBank:
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
         return data_out
 
     def getAccountByPhone(self, phone: str):
