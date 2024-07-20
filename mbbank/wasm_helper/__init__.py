@@ -88,6 +88,8 @@ class GO:
                     obj_id = len(self._values)
                 if obj_id >= len(self._values):
                     self._values.extend([undefined for _ in range(obj_id - len(self._values) + 1)])
+                if obj_id >= len(self._goRefCounts):
+                    self._goRefCounts.extend([float("inf") for _ in range(obj_id - len(self._goRefCounts) + 1)])
                 self._values[obj_id] = v
                 self._goRefCounts[obj_id] = 0
                 self._ids.setdefault(v, obj_id)
