@@ -1,7 +1,7 @@
 Pillow
 requests
 pytesseract
-aiohttp==3.9.5
+aiohttp==3.10.0
 setuptools
 wheel
 wasmtime
