@@ -39,8 +39,8 @@ jobs:
         run: pip install .
       - name: Install Env
         run: |
-          export MBBANK_USERNAME=${{ secrets.MBBANK_USERNAME }}
-          export MBBANK_PASSWORD=${{ secrets.MBBANK_PASSWORD }}
+          echo "MBBANK_USERNAME=${{ secrets.MBBANK_USERNAME }}" >> $GITHUB_ENV
+          echo "MBBANK_PASSWORD=${{ secrets.MBBANK_PASSWORD }}" >> $GITHUB_ENV
       - name: Test package Asyncio
         run: python tests/async_test.py
       - name: Test package Sync
