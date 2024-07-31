@@ -1,17 +1,17 @@
 # MBBank API for Python
-A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" account
+A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" personal account
 
 ## Why we  have this lib ?
 
 Because I don't want to lose money on some api services like [casso.vn](https://casso.vn/) or [payos.vn](https://payos.vn/)
 when have freemium tier but with limit :>
 
-what you need  that it use this lib to make your own code so you can use it free forever
+what you need that it use this lib to make your own code so you can use it free forever
+
+[Documentation & FAQ](http://mbbank.rtfd.io/)
 
 ## Requires
-   [tesseract (windows)](https://github.com/UB-Mannheim/tesseract/wiki)
-    
-   [tesseract (Linux & Mac)](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
+   [tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) (optional if you use default capcha solver)
 
    and python3
  
@@ -21,9 +21,7 @@ what you need  that it use this lib to make your own code so you can use it free
    
     pip install git+https://github.com/thedtvn/MBBank
 
-## Documentation
 
-[Online Documentation](http://mbbank.rtfd.io/)
 
 ## Extra Info
 - Payment QR Code Generator

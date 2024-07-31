@@ -7,6 +7,7 @@ nav:
   - 'API Documentation':
     - "Sync API": 'api_document/sync_api.md'
     - "Async API": 'api_document/async_api.md'
+    - "Image Processing": 'api_document/image_processing.md'
 
 theme:
   name: mkdocs

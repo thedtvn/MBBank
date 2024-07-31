@@ -1,15 +1,12 @@
 import asyncio
 import concurrent.futures
-from PIL import Image
-import pytesseract
-import re
 import datetime
 import base64
 import hashlib
 import typing
-import io
 import platform
 import aiohttp
+from .capcha_ocr import CapchaProcessing, TesseractOCR
 from .main import MBBankError
 from .wasm_helper import wasm_encrypt
 
@@ -24,6 +21,7 @@ headers_default = {
 }
 
 pool = concurrent.futures.ThreadPoolExecutor()
+
 
 def get_now_time():
     now = datetime.datetime.now()
@@ -41,22 +39,29 @@ class MBBankAsync:
     Args:
         username (str): MBBank Account Username
         password (str): MBBank Account Password
-        tesseract_path (str, optional): Tesseract path. Defaults to None.
+        ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, tesseract_path=None):
+    def __init__(self, *, username, password, ocr_class=None):
         self.__wasm_cache = None
         self.__userid = username
         self.__password = password
-        if tesseract_path is not None:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        self.ocr_class = TesseractOCR()
+        if ocr_class is not None:
+            if not isinstance(ocr_class, CapchaProcessing):
+                raise ValueError("ocr_class must be instance of CapchaProcessing")
+            self.ocr_class = ocr_class
         self.sessionId = None
         self._userinfo = None
         self._temp = {}
 
-    async def _req(self, url, *, json={}, headers={}):
+    async def _req(self, url, *, json=None, headers=None):
+        if headers is None:
+            headers = {}
+        if json is None:
+            json = {}
         while True:
             if self.sessionId is None:
                 await self._authenticate()
@@ -92,6 +97,7 @@ class MBBankAsync:
         async with aiohttp.ClientSession() as s:
             async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default) as r:
                 self.__wasm_cache = await r.read()
+        return self.__wasm_cache
 
     async def _authenticate(self):
         while True:
@@ -110,18 +116,8 @@ class MBBankAsync:
                 async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
                                   headers=headers, json=json_data) as r:
                     data_out = await r.json()
-            img_byte = io.BytesIO(base64.b64decode(data_out["imageString"]))
-            img = Image.open(img_byte)
-            img = img.convert('RGBA')
-            pix = img.load()
-            for y in range(img.size[1]):
-                for x in range(img.size[0]):
-                    if pix[x, y][0] < 102 or pix[x, y][1] < 102 or pix[x, y][2] < 102:
-                        pix[x, y] = (0, 0, 0, 255)
-                    else:
-                        pix[x, y] = (255, 255, 255, 255)
-            text = pytesseract.image_to_string(img)
-            text = re.sub(r"\s+", "", text, flags=re.MULTILINE)
+            img_bytes = base64.b64decode(data_out["imageString"])
+            text = self.ocr_class.process_image(img_bytes)
             payload = {
                 "userId": self.__userid,
                 "password": hashlib.md5(self.__password.encode()).hexdigest(),
@@ -133,7 +129,7 @@ class MBBankAsync:
             }
             wasm_bytes = await self._get_wasm_file()
             loop = asyncio.get_running_loop()
-            dataEnc = await loop.run_in_executor(pool, wasm_encrypt, self.__wasm_cache, payload)
+            dataEnc = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, payload)
             async with aiohttp.ClientSession() as s:
                 async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
                                   headers=headers_default, json={"dataEnc": dataEnc}) as r:
@@ -176,7 +172,7 @@ class MBBankAsync:
 
     async def getBalance(self):
         """
-        Get all main account and sub account balance
+        Get all main account and subaccount balance
 
         Returns:
             success (dict): list account balance
@@ -205,7 +201,7 @@ class MBBankAsync:
         Get saving interest rate
 
         Args:
-            currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Viet Nam Dong).
+            currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Vietnam Dong).
 
         Returns:
             success (dict): interest rate

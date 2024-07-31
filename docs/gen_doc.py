@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from griffe.dataclasses import Docstring
-from griffe.enumerations import DocstringSectionKind
-from mbbank import MBBank, MBBankAsync
+from griffe import Docstring
+from griffe import DocstringSectionKind
+from mbbank import MBBank, MBBankAsync, TesseractOCR, CapchaProcessing
 
 
 def parse_doc(class_doc):
@@ -92,4 +92,11 @@ with open("./docs/api_document/sync_api.md", "w") as f:
 
 with open("./docs/api_document/async_api.md", "w") as f:
     data = from_list_to_md(parse_doc(MBBankAsync))
+    f.write(data)
+
+with open("./docs/api_document/image_processing.md", "w") as f:
+    data = from_list_to_md(parse_doc(CapchaProcessing))
+    f.write(data)
+    f.write("\n\n")
+    data = from_list_to_md(parse_doc(TesseractOCR))
     f.write(data)

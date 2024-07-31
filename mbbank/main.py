@@ -1,13 +1,10 @@
-from PIL import Image
-import pytesseract
-import re
 import datetime
 import base64
 import hashlib
 import typing
-import io
 import platform
 import requests
+from .capcha_ocr import TesseractOCR, CapchaProcessing
 from .wasm_helper import wasm_encrypt
 
 headers_default = {
@@ -44,17 +41,20 @@ class MBBank:
     Args:
         username (str): MBBank Account Username
         password (str): MBBank Account Password
-        tesseract_path (str, optional): Tesseract path. Defaults to None.
+        ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, tesseract_path=None):
+    def __init__(self, *, username, password, ocr_class=None):
         self.__userid = username
         self.__password = password
         self.__wasm_cache = None
-        if tesseract_path is not None:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        self.ocr_class = TesseractOCR()
+        if ocr_class is not None:
+            if not isinstance(ocr_class, CapchaProcessing):
+                raise ValueError("ocr_class must be instance of CapchaProcessing")
+            self.ocr_class = ocr_class
         self.sessionId = None
         self._userinfo = None
         self._temp = {}
@@ -98,6 +98,7 @@ class MBBank:
             return self.__wasm_cache
         file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default).content
         self.__wasm_cache = file_data
+        return file_data
 
     def _authenticate(self):
         while True:
@@ -116,18 +117,8 @@ class MBBank:
                 with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
                             headers=headers, json=json_data) as r:
                     data_out = r.json()
-            img_byte = io.BytesIO(base64.b64decode(data_out["imageString"]))
-            img = Image.open(img_byte)
-            img = img.convert('RGBA')
-            pix = img.load()
-            for y in range(img.size[1]):
-                for x in range(img.size[0]):
-                    if pix[x, y][0] < 102 or pix[x, y][1] < 102 or pix[x, y][2] < 102:
-                        pix[x, y] = (0, 0, 0, 255)
-                    else:
-                        pix[x, y] = (255, 255, 255, 255)
-            text = pytesseract.image_to_string(img)
-            text = re.sub(r"\s+", "", text, flags=re.MULTILINE)
+            img_bytes = base64.b64decode(data_out["imageString"])
+            text = self.ocr_class.process_image(img_bytes)
             payload = {
                 "userId": self.__userid,
                 "password": hashlib.md5(self.__password.encode()).hexdigest(),
@@ -138,7 +129,7 @@ class MBBank:
                 "ibAuthen2faString": self.FPR,
             }
             wasm_bytes = self._get_wasm_file()
-            dataEnc = wasm_encrypt(self.__wasm_cache, payload)
+            dataEnc = wasm_encrypt(wasm_bytes, payload)
             with requests.Session() as s:
                 with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
                             headers=headers_default, json={"dataEnc": dataEnc}) as r:
@@ -171,8 +162,6 @@ class MBBank:
         """
         if self._userinfo is None:
             self._authenticate()
-        if accountNo is None:
-            accountNo = self._userinfo["result"]["data"]["accountNo"]
         json_data = {
             'accountNo': self.__userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
