@@ -11,7 +11,7 @@ what you need that it use this lib to make your own code so you can use it free 
 [Documentation & FAQ](http://mbbank.rtfd.io/)
 
 ## Requires
-   [tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) (optional if you use default capcha solver)
+   [tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) (optional if you not use default capcha solver)
 
    and python3
  
