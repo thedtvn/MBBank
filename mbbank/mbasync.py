@@ -275,7 +275,7 @@ class MBBankAsync:
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/loan/getList")
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail-web-onlineloanms/loan/getList")
         return data_out
 
     async def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime):

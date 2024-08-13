@@ -279,7 +279,7 @@ class MBBank:
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loan/getList")
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-web-onlineloanms/loan/getList")
         return data_out
 
     def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime):
