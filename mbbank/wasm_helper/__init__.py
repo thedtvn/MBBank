@@ -13,6 +13,8 @@ undefined = ContextVar('undefined')
 
 class globalThis:
     def __init__(self):
+        self.exports = undefined
+        self.window = dict_warper({"document": dict_warper({})})
         self.fs = fs_object()
         self.process = process_object()
         self.location = dict_warper({"origin": "https://online.mbbank.com.vn"})
@@ -75,7 +77,7 @@ class GO:
                 self.mem.setFloat64(addr, v, True)
                 return
 
-            if v is None:
+            if v is undefined:
                 self.mem.setFloat64(addr, 0, True)
                 return
 
