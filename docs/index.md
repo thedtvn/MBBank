@@ -19,9 +19,9 @@ what you need that it use this lib to make your own code so you can use it free 
 
 These pages go into great detail about everything the API can do.
 
-- [Sync API](/api_document/sync_api/): A core api in sync
-- [Async API](/api_document/async_api/): A core api in asyncio
-- [Image Processing](/api_document/image_processing/): Capcha processing class from image to text (you may need for
+- [Sync API](api_document/sync_api.md): A core api in sync
+- [Async API](api_document/async_api.md): A core api in asyncio
+- [Image Processing](api_document/image_processing.md): Capcha processing class from image to text (you may need for
   custom config or self implemented)
 
 ## FAQ
