@@ -39,15 +39,17 @@ class MBBankAsync:
     Args:
         username (str): MBBank Account Username
         password (str): MBBank Account Password
+        proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, ocr_class=None):
+    def __init__(self, *, username, password, proxy=None, ocr_class=None):
         self.__wasm_cache = None
         self.__userid = username
         self.__password = password
+        self.proxy = proxy
         self.ocr_class = TesseractOCR()
         if ocr_class is not None:
             if not isinstance(ocr_class, CapchaProcessing):
@@ -77,7 +79,7 @@ class MBBankAsync:
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             async with aiohttp.ClientSession() as s:
-                async with s.post(url, headers=headers, json=json_data) as r:
+                async with s.post(url, headers=headers, json=json_data, proxy=self.proxy) as r:
                     data_out = await r.json()
             if data_out["result"] is None:
                 await self.getBalance()
@@ -95,7 +97,8 @@ class MBBankAsync:
         if self.__wasm_cache is not None:
             return self.__wasm_cache
         async with aiohttp.ClientSession() as s:
-            async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default) as r:
+            async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
+                             proxy=self.proxy) as r:
                 self.__wasm_cache = await r.read()
         return self.__wasm_cache
 
@@ -114,7 +117,7 @@ class MBBankAsync:
             headers["X-Request-Id"] = rid
             async with aiohttp.ClientSession() as s:
                 async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
-                                  headers=headers, json=json_data) as r:
+                                  headers=headers, json=json_data, proxy=self.proxy) as r:
                     data_out = await r.json()
             img_bytes = base64.b64decode(data_out["imageString"])
             text = self.ocr_class.process_image(img_bytes)
@@ -132,7 +135,7 @@ class MBBankAsync:
             dataEnc = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, payload)
             async with aiohttp.ClientSession() as s:
                 async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                                  headers=headers_default, json={"dataEnc": dataEnc}) as r:
+                                  headers=headers_default, json={"dataEnc": dataEnc}, proxy=self.proxy) as r:
                     data_out = await r.json()
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]

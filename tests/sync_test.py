@@ -2,7 +2,8 @@ import datetime
 import os
 from mbbank import MBBank
 
-mb = MBBank(username=os.getenv("MBBANK_USERNAME"), password=os.getenv("MBBANK_PASSWORD"))
+mb = MBBank(username=os.getenv("MBBANK_USERNAME"), password=os.getenv("MBBANK_PASSWORD"),
+            proxy=os.getenv("http_proxy"))
 end_query_day = datetime.datetime.now()
 start_query_day = end_query_day - datetime.timedelta(days=30)
 mb.getBalance()

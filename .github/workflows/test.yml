@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Test on Push
+name: Test
 
 on:
   push:
@@ -42,6 +42,8 @@ jobs:
         run: |
           echo "MBBANK_USERNAME=${{ secrets.MBBANK_USERNAME }}" >> $GITHUB_ENV
           echo "MBBANK_PASSWORD=${{ secrets.MBBANK_PASSWORD }}" >> $GITHUB_ENV
+      - name: Set Proxy
+        run: python tests/proxy.py >> $GITHUB_ENV
       - name: Test package Asyncio
         run: python tests/async_test.py
       - name: Test package Sync

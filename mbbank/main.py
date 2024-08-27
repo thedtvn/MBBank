@@ -41,15 +41,21 @@ class MBBank:
     Args:
         username (str): MBBank Account Username
         password (str): MBBank Account Password
+        proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
     """
     deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, ocr_class=None):
+    def __init__(self, *, username, password, proxy=None, ocr_class=None):
         self.__userid = username
         self.__password = password
         self.__wasm_cache = None
+        if proxy is not None:
+            proxy_protocol = proxy.split("://")[0]
+            self.proxy = {proxy_protocol: proxy}
+        else:
+            self.proxy = {}
         self.ocr_class = TesseractOCR()
         if ocr_class is not None:
             if not isinstance(ocr_class, CapchaProcessing):
@@ -79,7 +85,8 @@ class MBBank:
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             with requests.Session() as s:
-                with s.post(url, headers=headers, json=json_data) as r:
+                with s.post(url, headers=headers, json=json_data,
+                            proxies=self.proxy) as r:
                     data_out = r.json()
             if data_out["result"] is None:
                 self.getBalance()
@@ -96,7 +103,8 @@ class MBBank:
     def _get_wasm_file(self):
         if self.__wasm_cache is not None:
             return self.__wasm_cache
-        file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default).content
+        file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
+                                 proxies=self.proxy).content
         self.__wasm_cache = file_data
         return file_data
 
@@ -115,7 +123,8 @@ class MBBank:
             headers["X-Request-Id"] = rid
             with requests.Session() as s:
                 with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
-                            headers=headers, json=json_data) as r:
+                            headers=headers, json=json_data,
+                            proxies=self.proxy) as r:
                     data_out = r.json()
             img_bytes = base64.b64decode(data_out["imageString"])
             text = self.ocr_class.process_image(img_bytes)
@@ -132,7 +141,8 @@ class MBBank:
             dataEnc = wasm_encrypt(wasm_bytes, payload)
             with requests.Session() as s:
                 with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                            headers=headers_default, json={"dataEnc": dataEnc}) as r:
+                            headers=headers_default, json={"dataEnc": dataEnc},
+                            proxies=self.proxy) as r:
                     data_out = r.json()
             if data_out["result"]["ok"]:
                 self.sessionId = data_out["sessionId"]
@@ -174,7 +184,7 @@ class MBBank:
 
     def getBalance(self):
         """
-        Get all main account and sub account balance
+        Get all main account and subaccount balance
 
         Returns:
             success (dict): list account balance
@@ -205,7 +215,7 @@ class MBBank:
         Get saving interest rate
 
         Args:
-            currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Viet Nam Dong).
+            currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Vietnam Dong).
 
         Returns:
             success (dict): interest rate
