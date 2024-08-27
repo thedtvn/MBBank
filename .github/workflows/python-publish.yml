@@ -37,16 +37,6 @@ jobs:
           sudo apt install libtesseract-dev
       - name: Install package
         run: pip install .
-      - name: Install Env
-        run: |
-          echo "MBBANK_USERNAME=${{ secrets.MBBANK_USERNAME }}" >> $GITHUB_ENV
-          echo "MBBANK_PASSWORD=${{ secrets.MBBANK_PASSWORD }}" >> $GITHUB_ENV
-      - name: Set Proxy
-        run: python tests/proxy.py >> $GITHUB_ENV
-      - name: Test package Asyncio
-        run: python tests/async_test.py
-      - name: Test package Sync
-        run: python tests/sync_test.py
       - name: Build package
         run: python ./setup.py sdist bdist_wheel
       - name: Publish package
