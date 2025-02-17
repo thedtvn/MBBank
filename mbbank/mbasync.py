@@ -6,7 +6,7 @@ import hashlib
 import typing
 import platform
 import aiohttp
-from .capcha_ocr import CapchaProcessing, TesseractOCR
+from .capcha_ocr import CapchaProcessing, CapchaOCR
 from .main import MBBankError
 from .wasm_helper import wasm_encrypt
 
@@ -50,7 +50,7 @@ class MBBankAsync:
         self.__userid = username
         self.__password = password
         self.proxy = proxy
-        self.ocr_class = TesseractOCR()
+        self.ocr_class = CapchaOCR()
         if ocr_class is not None:
             if not isinstance(ocr_class, CapchaProcessing):
                 raise ValueError("ocr_class must be instance of CapchaProcessing")

@@ -11,9 +11,9 @@ what you need that it use this lib to make your own code so you can use it free 
 [Documentation & FAQ](http://mbbank.rtfd.io/)
 
 ## Requires
-   [tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) (optional if you not use default capcha solver)
+   - [pytorch with cuda](https://pytorch.org/get-started/locally/#start-locally) (optional if you want to use cuda gpu)
 
-   and python3
+   - python3
  
 ## Install
     pip install mbbank-lib

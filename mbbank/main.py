@@ -4,7 +4,7 @@ import hashlib
 import typing
 import platform
 import requests
-from .capcha_ocr import TesseractOCR, CapchaProcessing
+from .capcha_ocr import CapchaOCR, CapchaProcessing
 from .wasm_helper import wasm_encrypt
 
 headers_default = {
@@ -56,7 +56,7 @@ class MBBank:
             self.proxy = {proxy_protocol: proxy}
         else:
             self.proxy = {}
-        self.ocr_class = TesseractOCR()
+        self.ocr_class = CapchaOCR()
         if ocr_class is not None:
             if not isinstance(ocr_class, CapchaProcessing):
                 raise ValueError("ocr_class must be instance of CapchaProcessing")

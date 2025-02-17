@@ -9,11 +9,9 @@ when have freemium tier but with limit :>
 what you need that it use this lib to make your own code so you can use it free forever
 
 ## Requires
+   - [pytorch with cuda](https://pytorch.org/get-started/locally/#start-locally) (optional if you want to use cuda gpu)
 
-- [tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md) (optional if you use default capcha
-  solver)
-
-- python3
+   - python3
 
 ## Manuals
 
