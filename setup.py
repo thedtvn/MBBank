@@ -13,7 +13,7 @@ with open('mbbank/__init__.py') as f:
 setup(
     name='mbbank-lib',
     version=version,
-    license="Apache License, Version 2.0",
+    license="MIT",
     description='A unofficially light weight Python Api for the "Military Commercial Joint Stock Bank" personal accounts',
     long_description=ldr,
     long_description_content_type="text/markdown",
