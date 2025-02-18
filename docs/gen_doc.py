@@ -3,7 +3,7 @@ import os
 
 from griffe import Docstring
 from griffe import DocstringSectionKind
-from mbbank import MBBank, MBBankAsync, TesseractOCR, CapchaProcessing
+from mbbank import MBBank, MBBankAsync, CapchaOCR, CapchaProcessing
 
 
 def parse_doc(class_doc):
@@ -98,5 +98,5 @@ with open("./docs/api_document/image_processing.md", "w") as f:
     data = from_list_to_md(parse_doc(CapchaProcessing))
     f.write(data)
     f.write("\n\n")
-    data = from_list_to_md(parse_doc(TesseractOCR))
+    data = from_list_to_md(parse_doc(CapchaOCR))
     f.write(data)
