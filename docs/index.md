@@ -9,7 +9,7 @@ when have freemium tier but with limit :>
 what you need that it use this lib to make your own code so you can use it free forever
 
 ## Requires
-   - [pytorch with cuda](https://pytorch.org/get-started/locally/#start-locally) (optional if you want to use cuda gpu)
+   - [onnx with cuda](https://onnxruntime.ai/getting-started) (optional if you want to use cuda gpu)
 
    - python3
 
@@ -36,3 +36,7 @@ These pages go into great detail about everything the API can do.
 - Will my account get banned if i use this lib ?
 
 > I can not guarantee that so use it with your own risk.
+
+- Can i run ocr model on cpu ?
+
+> Yes, you can. but it maybe will be slower than using gpu (cuda)

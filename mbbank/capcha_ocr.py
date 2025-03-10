@@ -1,5 +1,5 @@
 import io
-from mb_capcha_ocr import predict
+from mb_capcha_ocr import OcrModel
 from PIL import Image
 
 
@@ -34,7 +34,15 @@ class CapchaOCR(CapchaProcessing):
     """
     Torch based OCR for capcha processing
     https://pypi.org/project/mb-capcha-ocr/
+
+    Args:
+        model_path (str, optional): path to model file
     """
+
+    def __init__(self, model_path: str = None):
+        super().__init__()
+        # loading model will take about 1-3 seconds
+        self.model = OcrModel(model_path)
 
     def process_image(self, img: bytes) -> str:
         """
@@ -47,7 +55,7 @@ class CapchaOCR(CapchaProcessing):
             success (str): text from image
         """
         image = Image.open(io.BytesIO(img))
-        text = predict(image)
+        text = self.model.predict(image)
         return text
 
 
