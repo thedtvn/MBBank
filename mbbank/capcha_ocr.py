@@ -32,7 +32,7 @@ class CapchaProcessing:
 
 class CapchaOCR(CapchaProcessing):
     """
-    Torch based OCR for capcha processing
+    Onnx based OCR for capcha processing
     https://pypi.org/project/mb-capcha-ocr/
 
     Args:
