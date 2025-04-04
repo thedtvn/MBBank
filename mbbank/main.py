@@ -78,7 +78,7 @@ class MBBank:
         while True:
             if self.sessionId is None:
                 self._authenticate()
-            rid = self._generate_ref_id()
+            rid = f"{self.__userid}-{get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
