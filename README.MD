@@ -21,7 +21,14 @@ What you need that it use this lib to make your own code so you can use it free 
    
     pip install git+https://github.com/thedtvn/MBBank
 
-
+## Donate
+If you like this project and want to support it, you can do so by donating via the following methods:
+- **Momo**: 0961291206
+- **ZaloPay**: 0961291206
+- **Banking**:
+  - Techcombank - NGUYEN DUONG TUAN
+  - Account Nickname: THEDTVN
+  - Account Nuber: 9612912060
 
 ## Extra Info
 - Payment QR Code Generator
