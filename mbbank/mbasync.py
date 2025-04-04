@@ -4,21 +4,11 @@ import datetime
 import base64
 import hashlib
 import typing
-import platform
 import aiohttp
 from .capcha_ocr import CapchaProcessing, CapchaOCR
 from .main import MBBankError
 from .wasm_helper import wasm_encrypt
-
-headers_default = {
-    'Cache-Control': 'no-cache',
-    "App": "MB_WEB",
-    'Accept': 'application/json, text/plain, */*',
-    'Authorization': 'Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm',
-    'User-Agent': f'Mozilla/5.0 (X11; {platform.system()} {platform.processor()})',
-    "Origin": "https://online.mbbank.com.vn",
-    "Referer": "https://online.mbbank.com.vn/"
-}
+from .main import headers_default
 
 pool = concurrent.futures.ThreadPoolExecutor()
 
@@ -115,6 +105,8 @@ class MBBankAsync:
             }
             headers = headers_default.copy()
             headers["X-Request-Id"] = rid
+            headers["Deviceid"] = self.deviceIdCommon
+            headers["Refno"] = rid
             async with aiohttp.ClientSession() as s:
                 async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
                                   headers=headers, json=json_data, proxy=self.proxy) as r:

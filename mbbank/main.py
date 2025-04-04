@@ -2,19 +2,24 @@ import datetime
 import base64
 import hashlib
 import typing
-import platform
 import requests
 from .capcha_ocr import CapchaOCR, CapchaProcessing
 from .wasm_helper import wasm_encrypt
 
 headers_default = {
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'max-age=0',
     'Accept': 'application/json, text/plain, */*',
-    "App": "MB_WEB",
     'Authorization': 'Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm',
-    'User-Agent': f'Mozilla/5.0 (X11; {platform.system()} {platform.processor()})',
+    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
     "Origin": "https://online.mbbank.com.vn",
-    "Referer": "https://online.mbbank.com.vn/"
+    "Referer": "https://online.mbbank.com.vn/pl/login?returnUrl=%2F",
+    "App": "MB_WEB",
+    "Sec-Ch-Ua": '"Not.A/Brand";v="8", "Chromium";v="134", "Google Chrome";v="134"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
 }
 
 
@@ -73,7 +78,7 @@ class MBBank:
         while True:
             if self.sessionId is None:
                 self._authenticate()
-            rid = f"{self.__userid}-{get_now_time()}"
+            rid = self._generate_ref_id()
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
@@ -103,7 +108,7 @@ class MBBank:
     def _get_wasm_file(self):
         if self.__wasm_cache is not None:
             return self.__wasm_cache
-        file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
+        file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm",
                                  proxies=self.proxy).content
         self.__wasm_cache = file_data
         return file_data
@@ -121,6 +126,8 @@ class MBBank:
             }
             headers = headers_default.copy()
             headers["X-Request-Id"] = rid
+            headers["Deviceid"] = self.deviceIdCommon
+            headers["Refno"] = rid
             with requests.Session() as s:
                 with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
                             headers=headers, json=json_data,
