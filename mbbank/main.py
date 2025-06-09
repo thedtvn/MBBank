@@ -23,12 +23,6 @@ headers_default = {
 }
 
 
-def get_now_time():
-    now = datetime.datetime.now()
-    microsecond = int(now.strftime("%f")[:2])
-    return now.strftime(f"%Y%m%d%H%M{microsecond}")
-
-
 class MBBankError(Exception):
     def __init__(self, err_out):
         self.code = err_out['responseCode']
@@ -47,15 +41,15 @@ class MBBank:
         username (str): MBBank Account Username
         password (str): MBBank Account Password
         proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
-        ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
+        ocr_class (CapchaProcessing, optional): instance of CapchaProcessing class. Defaults to CapchaOCR().
     """
-    deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
+
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, proxy=None, ocr_class=None):
-        self.__userid = username
-        self.__password = password
-        self.__wasm_cache = None
+    def __init__(self, *, username: str, password: str, proxy: dict=None, ocr_class=None):
+        self._userid = username
+        self._password = password
+        self._wasm_cache = None
         if proxy is not None:
             proxy_protocol = proxy.split("://")[0]
             self.proxy = {proxy_protocol: proxy}
@@ -69,6 +63,12 @@ class MBBank:
         self.sessionId = None
         self._userinfo = None
         self._temp = {}
+        self.deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{self._get_now_time()}'
+
+    def _get_now_time(self):
+        now = datetime.datetime.now()
+        microsecond = int(now.strftime("%f")[:2])
+        return now.strftime(f"%Y%m%d%H%M{microsecond}")
 
     def _req(self, url, *, json=None, headers=None):
         if headers is None:
@@ -78,7 +78,7 @@ class MBBank:
         while True:
             if self.sessionId is None:
                 self._authenticate()
-            rid = f"{self.__userid}-{get_now_time()}"
+            rid = f"{self._userid}-{self._get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
@@ -106,11 +106,11 @@ class MBBank:
         return data_out
 
     def _get_wasm_file(self):
-        if self.__wasm_cache is not None:
-            return self.__wasm_cache
+        if self._wasm_cache is not None:
+            return self._wasm_cache
         file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm",
                                  proxies=self.proxy).content
-        self.__wasm_cache = file_data
+        self._wasm_cache = file_data
         return file_data
 
     def _authenticate(self):
@@ -118,7 +118,7 @@ class MBBank:
             self._userinfo = None
             self.sessionId = None
             self._temp = {}
-            rid = f"{self.__userid}-{get_now_time()}"
+            rid = f"{self._userid}-{self._get_now_time()}"
             json_data = {
                 'sessionId': "",
                 'refNo': rid,
@@ -136,11 +136,11 @@ class MBBank:
             img_bytes = base64.b64decode(data_out["imageString"])
             text = self.ocr_class.process_image(img_bytes)
             payload = {
-                "userId": self.__userid,
-                "password": hashlib.md5(self.__password.encode()).hexdigest(),
+                "userId": self._userid,
+                "password": hashlib.md5(self._password.encode()).hexdigest(),
                 "captcha": text,
                 'sessionId': "",
-                'refNo': f'{self.__userid}-{get_now_time()}',
+                'refNo': f'{self._userid}-{self._get_now_time()}',
                 'deviceIdCommon': self.deviceIdCommon,
                 "ibAuthen2faString": self.FPR,
             }
@@ -180,7 +180,7 @@ class MBBank:
         if self._userinfo is None:
             self._authenticate()
         json_data = {
-            'accountNo': self.__userid if accountNo is None else accountNo,
+            'accountNo': self._userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
             'toDate': to_date.strftime("%d/%m/%Y"),  # max 3 months
         }
@@ -284,6 +284,27 @@ class MBBank:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
+        return data_out
+
+    def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]):
+        """
+        Get saving detail by account number
+
+        Args:
+            accNo (str): saving account number
+            accType (Literal["OSA", "SBA"]): saving account type | OSA: Online Saving Account, SBA: Saving Bank Account
+
+        Returns:
+            success (dict): saving detail
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        json_data = {
+            "accNo": accNo,
+            "accType": accType
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getDetail", json=json_data)
         return data_out
 
     def getLoanList(self):

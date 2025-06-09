@@ -16,14 +16,17 @@ async def main():
     await mb.getBankList()
     await mb.getBalanceLoyalty()
     await mb.getLoanList()
-    await mb.getSavingList()
+    await mb.getTransactionAccountHistory(from_date=start_query_day, to_date=end_query_day)
     for i in ["TRANSFER", "PAYMENT"]:
         for a in ["MOST", "LATEST"]:
             await mb.getFavorBeneficiaryList(transactionType=i, searchType=a)
     card_list = await mb.getCardList()
     for i in card_list["cardList"]:
         await mb.getCardTransactionHistory(i["cardNo"], start_query_day, end_query_day)
-    await mb.getTransactionAccountHistory(from_date=start_query_day, to_date=end_query_day)
-
+    saving_list = await mb.getSavingList()
+    for i in saving_list["osaList"]:
+        await mb.getSavingDetail(i["accountNumber"], "OSA")
+    for i in saving_list["sbaList"]:
+        await mb.getSavingDetail(i["accountNumber"], "SBA")
 
 asyncio.run(main())

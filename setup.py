@@ -1,7 +1,7 @@
 import re
 from setuptools import setup
 
-with open("req.txt", "r") as f:
+with open("requirements.txt", "r") as f:
     req = f.read().splitlines()
 
 with open("README.MD", "r") as f:

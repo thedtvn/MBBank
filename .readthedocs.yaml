@@ -18,8 +18,8 @@ build:
     - gcc
   commands:
     - pip install pip-tools
-    - pip-compile docs/req.in
-    - pip install -r docs/req.txt
+    - pip-compile docs/requirements.in
+    - pip install -r docs/requirements.txt
     - pip install .
     - python docs/gen_doc.py
     - mkdocs build -d $READTHEDOCS_OUTPUT/html/
@@ -30,4 +30,4 @@ mkdocs:
 # Optionally declare the Python requirements required to build your docs
 python:
    install:
-   - requirements: docs/req.txt
+   - requirements: docs/requirements.txt

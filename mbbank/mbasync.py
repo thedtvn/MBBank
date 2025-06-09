@@ -6,7 +6,7 @@ import hashlib
 import typing
 import aiohttp
 from .capcha_ocr import CapchaProcessing, CapchaOCR
-from .main import MBBankError
+from .main import MBBankError, MBBank
 from .wasm_helper import wasm_encrypt
 from .main import headers_default
 
@@ -19,7 +19,7 @@ def get_now_time():
     return now.strftime(f"%Y%m%d%H%M{microsecond}")
 
 
-class MBBankAsync:
+class MBBankAsync(MBBank):
     """Core Async class
 
     Attributes:
@@ -32,22 +32,72 @@ class MBBankAsync:
         proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to TesseractOCR().
     """
-    deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{get_now_time()}'
-    FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username, password, proxy=None, ocr_class=None):
-        self.__wasm_cache = None
-        self.__userid = username
-        self.__password = password
-        self.proxy = proxy
-        self.ocr_class = CapchaOCR()
-        if ocr_class is not None:
-            if not isinstance(ocr_class, CapchaProcessing):
-                raise ValueError("ocr_class must be instance of CapchaProcessing")
-            self.ocr_class = ocr_class
-        self.sessionId = None
-        self._userinfo = None
-        self._temp = {}
+    def __init__(self, *, username: str, password: str, proxy: dict=None, ocr_class=None):
+        super().__init__(username=username, password=password, proxy=proxy, ocr_class=ocr_class)
+        # convert proxy dict by requests to aiohttp format
+        if len(self.proxy.values()):
+            self.proxy = self.proxy.values()[0]
+        else:
+            self.proxy = None
+
+    async def _get_wasm_file(self):
+        if self._wasm_cache is not None:
+            return self._wasm_cache
+        async with aiohttp.ClientSession() as s:
+            async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
+                             proxy=self.proxy) as r:
+                self._wasm_cache = await r.read()
+        return self._wasm_cache
+
+    async def _authenticate(self):
+        while True:
+            self._userinfo = None
+            self.sessionId = None
+            self._temp = {}
+            rid = f"{self._userid}-{get_now_time()}"
+            json_data = {
+                'sessionId': "",
+                'refNo': rid,
+                'deviceIdCommon': self.deviceIdCommon,
+            }
+            headers = headers_default.copy()
+            headers["X-Request-Id"] = rid
+            headers["Deviceid"] = self.deviceIdCommon
+            headers["Refno"] = rid
+            async with aiohttp.ClientSession() as s:
+                async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
+                                  headers=headers, json=json_data, proxy=self.proxy) as r:
+                    data_out = await r.json()
+            img_bytes = base64.b64decode(data_out["imageString"])
+            text = await asyncio.get_event_loop().run_in_executor(
+                pool, self.ocr_class.process_image, img_bytes
+            )
+            payload = {
+                "userId": self._userid,
+                "password": hashlib.md5(self._password.encode()).hexdigest(),
+                "captcha": text,
+                'sessionId': "",
+                'refNo': f'{self._userid}-{get_now_time()}',
+                'deviceIdCommon': self.deviceIdCommon,
+                "ibAuthen2faString": self.FPR,
+            }
+            wasm_bytes = await self._get_wasm_file()
+            loop = asyncio.get_running_loop()
+            dataEnc = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, payload)
+            async with aiohttp.ClientSession() as s:
+                async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
+                                  headers=headers_default, json={"dataEnc": dataEnc}, proxy=self.proxy) as r:
+                    data_out = await r.json()
+            if data_out["result"]["ok"]:
+                self.sessionId = data_out["sessionId"]
+                self._userinfo = data_out
+                return
+            elif data_out["result"]["responseCode"] == "GW283":
+                pass
+            else:
+                err_out = data_out["result"]
+                raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
 
     async def _req(self, url, *, json=None, headers=None):
         if headers is None:
@@ -57,7 +107,7 @@ class MBBankAsync:
         while True:
             if self.sessionId is None:
                 await self._authenticate()
-            rid = f"{self.__userid}-{get_now_time()}"
+            rid = f"{self._userid}-{get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
@@ -83,62 +133,6 @@ class MBBankAsync:
                 raise MBBankError(err_out)
         return data_out
 
-    async def _get_wasm_file(self):
-        if self.__wasm_cache is not None:
-            return self.__wasm_cache
-        async with aiohttp.ClientSession() as s:
-            async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
-                             proxy=self.proxy) as r:
-                self.__wasm_cache = await r.read()
-        return self.__wasm_cache
-
-    async def _authenticate(self):
-        while True:
-            self._userinfo = None
-            self.sessionId = None
-            self._temp = {}
-            rid = f"{self.__userid}-{get_now_time()}"
-            json_data = {
-                'sessionId': "",
-                'refNo': rid,
-                'deviceIdCommon': self.deviceIdCommon,
-            }
-            headers = headers_default.copy()
-            headers["X-Request-Id"] = rid
-            headers["Deviceid"] = self.deviceIdCommon
-            headers["Refno"] = rid
-            async with aiohttp.ClientSession() as s:
-                async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
-                                  headers=headers, json=json_data, proxy=self.proxy) as r:
-                    data_out = await r.json()
-            img_bytes = base64.b64decode(data_out["imageString"])
-            text = self.ocr_class.process_image(img_bytes)
-            payload = {
-                "userId": self.__userid,
-                "password": hashlib.md5(self.__password.encode()).hexdigest(),
-                "captcha": text,
-                'sessionId': "",
-                'refNo': f'{self.__userid}-{get_now_time()}',
-                'deviceIdCommon': self.deviceIdCommon,
-                "ibAuthen2faString": self.FPR,
-            }
-            wasm_bytes = await self._get_wasm_file()
-            loop = asyncio.get_running_loop()
-            dataEnc = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, payload)
-            async with aiohttp.ClientSession() as s:
-                async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                                  headers=headers_default, json={"dataEnc": dataEnc}, proxy=self.proxy) as r:
-                    data_out = await r.json()
-            if data_out["result"]["ok"]:
-                self.sessionId = data_out["sessionId"]
-                self._userinfo = data_out
-                return
-            elif data_out["result"]["responseCode"] == "GW283":
-                pass
-            else:
-                err_out = data_out["result"]
-                raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
-
     async def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
                                            to_date: datetime.datetime):
         """
@@ -156,7 +150,7 @@ class MBBankAsync:
             MBBankError: if api response not ok
         """
         json_data = {
-            'accountNo': self.__userid if accountNo is None else accountNo,
+            'accountNo': self._userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
             'toDate': to_date.strftime("%d/%m/%Y"),  # max 3 months
         }
@@ -259,6 +253,28 @@ class MBBankAsync:
         """
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
         return data_out
+
+    async def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]):
+        """
+        Get saving detail by account number
+
+        Args:
+            accNo (str): saving account number
+            accType (Literal["OSA", "SBA"]): saving account type | OSA: Online Saving Account, SBA: Saving Bank Account
+
+        Returns:
+            success (dict): saving detail
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        json_data = {
+            "accNo": accNo,
+            "accType": accType
+        }
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getDetail", json=json_data)
+        return data_out
+
 
     async def getLoanList(self):
         """
