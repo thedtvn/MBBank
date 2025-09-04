@@ -46,7 +46,7 @@ class MBBank:
 
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username: str, password: str, proxy: dict=None, ocr_class=None):
+    def __init__(self, *, username: str, password: str, proxy: dict = None, ocr_class=None):
         self._userid = username
         self._password = password
         self._wasm_cache = None
@@ -113,53 +113,76 @@ class MBBank:
         self._wasm_cache = file_data
         return file_data
 
+    def get_capcha_image(self) -> bytes:
+        """
+        Get capcha image as bytes
+
+        Returns:
+            success (bytes): capcha image as bytes
+        """
+        rid = f"{self._userid}-{self._get_now_time()}"
+        json_data = {
+            'sessionId': "",
+            'refNo': rid,
+            'deviceIdCommon': self.deviceIdCommon,
+        }
+        headers = headers_default.copy()
+        headers["X-Request-Id"] = rid
+        headers["Deviceid"] = self.deviceIdCommon
+        headers["Refno"] = rid
+        with requests.Session() as s:
+            with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
+                        headers=headers, json=json_data,
+                        proxies=self.proxy) as r:
+                data_out = r.json()
+                return base64.b64decode(data_out["imageString"])
+
+    def login(self, captcha_text: str):
+        """
+        Login to MBBank account
+
+        Args:
+            captcha_text (str): capcha text from capcha image
+
+        Raises:
+            MBBankError: if login failed
+        """
+        payload = {
+            "userId": self._userid,
+            "password": hashlib.md5(self._password.encode()).hexdigest(),
+            "captcha": captcha_text,
+            'sessionId': "",
+            'refNo': f'{self._userid}-{self._get_now_time()}',
+            'deviceIdCommon': self.deviceIdCommon,
+            "ibAuthen2faString": self.FPR,
+        }
+        wasm_bytes = self._get_wasm_file()
+        data_encrypt = wasm_encrypt(wasm_bytes, payload)
+        with requests.Session() as s:
+            with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
+                        headers=headers_default, json={"dataEnc": data_encrypt},
+                        proxies=self.proxy) as r:
+                data_out = r.json()
+        if data_out["result"]["ok"]:
+            self.sessionId = data_out["sessionId"]
+            self._userinfo = data_out
+            return
+        else:
+            raise MBBankError(data_out["result"])
+
     def _authenticate(self):
         while True:
             self._userinfo = None
             self.sessionId = None
             self._temp = {}
-            rid = f"{self._userid}-{self._get_now_time()}"
-            json_data = {
-                'sessionId': "",
-                'refNo': rid,
-                'deviceIdCommon': self.deviceIdCommon,
-            }
-            headers = headers_default.copy()
-            headers["X-Request-Id"] = rid
-            headers["Deviceid"] = self.deviceIdCommon
-            headers["Refno"] = rid
-            with requests.Session() as s:
-                with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
-                            headers=headers, json=json_data,
-                            proxies=self.proxy) as r:
-                    data_out = r.json()
-            img_bytes = base64.b64decode(data_out["imageString"])
-            text = self.ocr_class.process_image(img_bytes)
-            payload = {
-                "userId": self._userid,
-                "password": hashlib.md5(self._password.encode()).hexdigest(),
-                "captcha": text,
-                'sessionId': "",
-                'refNo': f'{self._userid}-{self._get_now_time()}',
-                'deviceIdCommon': self.deviceIdCommon,
-                "ibAuthen2faString": self.FPR,
-            }
-            wasm_bytes = self._get_wasm_file()
-            dataEnc = wasm_encrypt(wasm_bytes, payload)
-            with requests.Session() as s:
-                with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
-                            headers=headers_default, json={"dataEnc": dataEnc},
-                            proxies=self.proxy) as r:
-                    data_out = r.json()
-            if data_out["result"]["ok"]:
-                self.sessionId = data_out["sessionId"]
-                self._userinfo = data_out
-                return
-            elif data_out["result"]["responseCode"] == "GW283":
-                pass
-            else:
-                err_out = data_out["result"]
-                raise Exception(f"{err_out['responseCode']} | {err_out['message']}")
+            img_bytes = self.get_capcha_image()
+            captcha_text = self.ocr_class.process_image(img_bytes)
+            try:
+                return self.login(captcha_text)
+            except MBBankError as e:
+                if e.code == "GW283":
+                    continue # capcha error, try again
+                raise e
 
     def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
                                      to_date: datetime.datetime):
@@ -391,3 +414,9 @@ class MBBank:
         else:
             self.getBalance()
         return self._userinfo
+
+    def getBanks(self):
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        return data_out
+
+

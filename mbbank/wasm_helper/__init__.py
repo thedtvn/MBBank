@@ -14,7 +14,11 @@ undefined = ContextVar('undefined')
 class globalThis:
     def __init__(self):
         self.exports = undefined
-        self.window = dict_warper({"document": dict_warper({})})
+        self.window = dict_warper({
+            "document": {
+                "we_love_mb": True # From CookieGMVN Library :)
+            }
+        })
         self.fs = fs_object()
         self.process = process_object()
         self.location = dict_warper({"origin": "https://online.mbbank.com.vn"})
@@ -137,14 +141,7 @@ class GO:
         print("exit code:", exitCode)
 
     def importObject(self, imports_type: list[wasmtime.ImportType]):
-        def proxy(name):
-            def fn(*args, **kwargs):
-                call = getattr(self.go_js, name)
-                return call(*args, **kwargs)
-
-            return fn
-
-        return [wasmtime.Func(self.wasm_store, i.type, proxy(i.name)) for i in imports_type]
+        return [wasmtime.Func(self.wasm_store, i.type, getattr(self.go_js, i.name)) for i in imports_type]
 
     # noinspection PyAttributeOutsideInit
     def run(self, inst):
@@ -213,7 +210,7 @@ class GO:
 
     def _makeFuncWrapper(self, ids):
         def wrapper(*args, **kwargs):
-            event = dict_warper({"id": int(ids), "args": hash_list(args), "this": global_this})
+            event = dict_warper({"id": int(ids), "args": args, "this": global_this})
             self._pendingEvent = event
             self._resume()
             return event.result
@@ -372,7 +369,7 @@ class GOJS:
     def debug(self, *args):
         pass
 
-
+# All instances shared the same wasm module
 def wasm_encrypt(wasm_files, json_data):
     if getattr(global_this, 'bder', None) is not None:
         return global_this.bder(json.dumps(json_data), "0")

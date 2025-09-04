@@ -9,6 +9,7 @@ async def main():
     mb = MBBankAsync(username=os.getenv("MBBANK_USERNAME"), password=os.getenv("MBBANK_PASSWORD"))
     end_query_day = datetime.datetime.now()
     start_query_day = end_query_day - datetime.timedelta(days=30)
+    await mb.getBanks()
     await mb.getBalance()
     await mb.userinfo()
     await mb.getInterestRate()

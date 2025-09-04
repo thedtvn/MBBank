@@ -214,6 +214,10 @@ class process_object:
 class dict_warper:
     def __init__(self, dict_data):
         for key, value in dict_data.items():
+            if isinstance(value, dict):
+                value = dict_warper(value)
+            elif isinstance(value, list) or isinstance(value, tuple):
+                value = hash_list(value)
             setattr(self, key, value)
 
     def to_dict(self):
