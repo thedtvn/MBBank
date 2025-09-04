@@ -8,8 +8,9 @@ import aiohttp
 from .main import MBBankError, MBBank
 from .wasm_helper import wasm_encrypt
 from .main import headers_default
+from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, BeneficiaryListResponseModal, CardListResponseModal
 
-pool = concurrent.futures.ThreadPoolExecutor()
+pool = concurrent.futures.ThreadPoolExecutor() # thread pool for blocking tasks like OCR and wasm
 
 
 def get_now_time():
@@ -151,8 +152,7 @@ class MBBankAsync(MBBank):
             elif data_out["result"]["responseCode"] == "GW200":
                 await self._authenticate()
             else:
-                err_out = data_out["result"]
-                raise MBBankError(err_out)
+                raise MBBankError(data_out["result"])
         return data_out
 
     async def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
@@ -181,31 +181,31 @@ class MBBankAsync(MBBank):
             json=json_data)
         return data_out
 
-    async def getBalance(self):
+    async def getBalance(self) -> BalanceResponseModal:
         """
         Get all main account and subaccount balance
 
         Returns:
-            success (dict): list account balance
+            success (BalanceResponseModal): balance model
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = await self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
-        return data_out
+        return BalanceResponseModal.model_validate(data_out, strict=True)
 
-    async def getBalanceLoyalty(self):
+    async def getBalanceLoyalty(self) -> BalanceLoyaltyResponseModal:
         """
         Get Account loyalty rank and Member loyalty point
 
         Returns:
-            success (dict): loyalty point
+            success (BalanceLoyaltyResponseModal): loyalty balance model
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
-        return data_out
+        return BalanceLoyaltyResponseModal.model_validate(data_out, strict=True)
 
     async def getInterestRate(self, currency: str = "VND"):
         """
@@ -228,7 +228,7 @@ class MBBankAsync(MBBank):
         return data_out
 
     async def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"],
-                                      searchType: typing.Literal["MOST", "LATEST"]):
+                                      searchType: typing.Literal["MOST", "LATEST"]) -> BeneficiaryListResponseModal:
         """
         Get all favor or most transfer beneficiary list from your account
 
@@ -237,7 +237,7 @@ class MBBankAsync(MBBank):
             searchType (Literal["MOST", "LATEST"]): search type
 
         Returns:
-            success (dict): favor beneficiary list
+            success (BeneficiaryListResponseModal): favor beneficiary list
 
         Raises:
             MBBankError: if api response not ok
@@ -248,20 +248,20 @@ class MBBankAsync(MBBank):
         }
         data_out = await self._req(
             "https://online.mbbank.com.vn/api/retail_web/internetbanking/getFavorBeneficiaryList", json=json_data)
-        return data_out
+        return BeneficiaryListResponseModal.model_validate(data_out, strict=True)
 
-    async def getCardList(self):
+    async def getCardList(self) -> CardListResponseModal:
         """
         Get all card list from your account
 
         Returns:
-            success (dict): card list
+            success (CardListResponseModal): card list
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/card/getList")
-        return data_out
+        return CardListResponseModal.model_validate(data_out, strict=True)
 
     async def getSavingList(self):
         """
@@ -337,18 +337,18 @@ class MBBankAsync(MBBank):
                                    json=json_data)
         return data_out
 
-    async def getBankList(self):
+    async def getBankList(self) -> BankListResponseModal:
         """
         Get transfer all bank list
 
         Returns:
-            success (dict): bank list
+            success (BankListResponseModal): bank list
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
-        return data_out
+        return BankListResponseModal.model_validate(data_out, strict=True)
 
     async def getAccountByPhone(self, phone: str):
         """
@@ -383,8 +383,3 @@ class MBBankAsync(MBBank):
         else:
             await self.getBalance()
         return self._userinfo
-
-    async def getBanks(self):
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
-        return data_out
-

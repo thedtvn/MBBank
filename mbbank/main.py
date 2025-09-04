@@ -5,6 +5,7 @@ import typing
 import requests
 from .capcha_ocr import CapchaOCR, CapchaProcessing
 from .wasm_helper import wasm_encrypt
+from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, BeneficiaryListResponseModal, CardListResponseModal
 
 headers_default = {
     'Cache-Control': 'max-age=0',
@@ -101,8 +102,7 @@ class MBBank:
             elif data_out["result"]["responseCode"] == "GW200":
                 self._authenticate()
             else:
-                err_out = data_out["result"]
-                raise MBBankError(err_out)
+                raise MBBankError(data_out["result"])
         return data_out
 
     def _get_wasm_file(self):
@@ -212,12 +212,12 @@ class MBBank:
             json=json_data)
         return data_out
 
-    def getBalance(self):
+    def getBalance(self) -> BalanceResponseModal:
         """
         Get all main account and subaccount balance
 
         Returns:
-            success (dict): list account balance
+            success (BalanceResponseModal): balance model
 
         Raises:
             MBBankError: if api response not ok
@@ -225,20 +225,20 @@ class MBBank:
         if self._userinfo is None:
             self._authenticate()
         data_out = self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
-        return data_out
+        return BalanceResponseModal.model_validate(data_out, strict=True)
 
-    def getBalanceLoyalty(self):
+    def getBalanceLoyalty(self) -> BalanceLoyaltyResponseModal:
         """
         Get Account loyalty rank and Member loyalty point
 
         Returns:
-            success (dict): loyalty point
+            success (BalanceLoyaltyResponseModal): loyalty balance model
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
-        return data_out
+        return BalanceLoyaltyResponseModal.model_validate(data_out, strict=True)
 
     def getInterestRate(self, currency: str = "VND"):
         """
@@ -281,7 +281,7 @@ class MBBank:
         }
         data_out = self._req(
             "https://online.mbbank.com.vn/api/retail_web/internetbanking/getFavorBeneficiaryList", json=json_data)
-        return data_out
+        return BeneficiaryListResponseModal.model_validate(data_out, strict=True)
 
     def getCardList(self):
         """
@@ -294,7 +294,7 @@ class MBBank:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/card/getList")
-        return data_out
+        return CardListResponseModal.model_validate(data_out, strict=True)
 
     def getSavingList(self):
         """
@@ -380,7 +380,7 @@ class MBBank:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
-        return data_out
+        return BankListResponseModal.model_validate(data_out, strict=True)
 
     def getAccountByPhone(self, phone: str):
         """
@@ -414,9 +414,5 @@ class MBBank:
         else:
             self.getBalance()
         return self._userinfo
-
-    def getBanks(self):
-        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
-        return data_out
 
 
