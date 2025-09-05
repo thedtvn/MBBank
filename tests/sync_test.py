@@ -5,7 +5,6 @@ from mbbank import MBBank
 mb = MBBank(username=os.getenv("MBBANK_USERNAME"), password=os.getenv("MBBANK_PASSWORD"))
 end_query_day = datetime.datetime.now()
 start_query_day = end_query_day - datetime.timedelta(days=30)
-mb.getBanks()
 mb.getBalance()
 mb.userinfo()
 mb.getInterestRate()
