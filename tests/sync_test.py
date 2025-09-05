@@ -16,11 +16,11 @@ for i in ["TRANSFER", "PAYMENT"]:
     for a in ["MOST", "LATEST"]:
         mb.getFavorBeneficiaryList(transactionType=i, searchType=a)
 card_list = mb.getCardList()
-for i in card_list["cardList"]:
-    mb.getCardTransactionHistory(i["cardNo"], start_query_day, end_query_day)
+for i in card_list.cardList:
+    mb.getCardTransactionHistory(i.cardNo, start_query_day, end_query_day)
 saving_list = mb.getSavingList()
-for i in saving_list["osaList"]:
-    mb.getSavingDetail(i["accountNumber"], "OSA")
-for i in saving_list["sbaList"]:
-    mb.getSavingDetail(i["accountNumber"], "SBA")
+for i in saving_list.osaList:
+    mb.getSavingDetail(i.accountNumber, "OSA")
+for i in saving_list.sbaList:
+    mb.getSavingDetail(i.accountNumber, "SBA")
 mb.getTransactionAccountHistory(from_date=start_query_day, to_date=end_query_day)

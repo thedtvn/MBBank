@@ -5,7 +5,10 @@ import typing
 import requests
 from .capcha_ocr import CapchaOCR, CapchaProcessing
 from .wasm_helper import wasm_encrypt
-from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, BeneficiaryListResponseModal, CardListResponseModal
+from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
+    BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, \
+    LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal \
+    , CardTransactionsResponseModal, SavingDetailResponseModal
 
 headers_default = {
     'Cache-Control': 'max-age=0',
@@ -165,6 +168,7 @@ class MBBank:
                 data_out = r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
+            data_out.pop("result", None)
             self._userinfo = data_out
             return
         else:
@@ -181,11 +185,11 @@ class MBBank:
                 return self.login(captcha_text)
             except MBBankError as e:
                 if e.code == "GW283":
-                    continue # capcha error, try again
+                    continue  # capcha error, try again
                 raise e
 
     def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
-                                     to_date: datetime.datetime):
+                                     to_date: datetime.datetime) -> TransactionHistoryResponseModal:
         """
         Get account transaction history
 
@@ -195,7 +199,7 @@ class MBBank:
             to_date (datetime.datetime): transaction to date
 
         Returns:
-            success (dict): account transaction history
+            success (TransactionHistoryResponseModal): account transaction history
 
         Raises:
             MBBankError: if api response not ok
@@ -210,7 +214,7 @@ class MBBank:
         data_out = self._req(
             "https://online.mbbank.com.vn/api/retail-transactionms/transactionms/get-account-transaction-history",
             json=json_data)
-        return data_out
+        return TransactionHistoryResponseModal.model_validate(data_out, strict=True)
 
     def getBalance(self) -> BalanceResponseModal:
         """
@@ -240,7 +244,7 @@ class MBBank:
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
         return BalanceLoyaltyResponseModal.model_validate(data_out, strict=True)
 
-    def getInterestRate(self, currency: str = "VND"):
+    def getInterestRate(self, currency: str = "VND") -> InterestRateResponseModal:
         """
         Get saving interest rate
 
@@ -248,7 +252,7 @@ class MBBank:
             currency (str, optional): currency ISO 4217 format. Defaults to "VND" (Vietnam Dong).
 
         Returns:
-            success (dict): interest rate
+            success (InterestRateResponseModal): interest rate
 
         Raises:
             MBBankError: if api response not ok
@@ -258,10 +262,10 @@ class MBBank:
             "currency": currency,
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getInterestRate", json=json_data)
-        return data_out
+        return InterestRateResponseModal.model_validate(data_out, strict=True)
 
     def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"],
-                                searchType: typing.Literal["MOST", "LATEST"]):
+                                searchType: typing.Literal["MOST", "LATEST"]) -> UserInfoResponseModal:
         """
         Get all favor or most transfer beneficiary list from your account
 
@@ -270,7 +274,7 @@ class MBBank:
             searchType (Literal["MOST", "LATEST"]): search type
 
         Returns:
-            success (dict): favor beneficiary list
+            success (UserInfoResponseModal): favor beneficiary list
 
         Raises:
             MBBankError: if api response not ok
@@ -283,12 +287,12 @@ class MBBank:
             "https://online.mbbank.com.vn/api/retail_web/internetbanking/getFavorBeneficiaryList", json=json_data)
         return BeneficiaryListResponseModal.model_validate(data_out, strict=True)
 
-    def getCardList(self):
+    def getCardList(self) -> CardListResponseModal:
         """
         Get all card list from your account
 
         Returns:
-            success (dict): card list
+            success (CardListResponseModal): card list
 
         Raises:
             MBBankError: if api response not ok
@@ -296,20 +300,20 @@ class MBBank:
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/card/getList")
         return CardListResponseModal.model_validate(data_out, strict=True)
 
-    def getSavingList(self):
+    def getSavingList(self) -> SavingListResponseModal:
         """
         Get all saving list from your account
 
         Returns:
-            success (dict): saving list
+            success (SavingListResponseModal): saving list
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
-        return data_out
+        return SavingListResponseModal.model_validate(data_out, strict=True)
 
-    def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]):
+    def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]) -> SavingDetailResponseModal:
         """
         Get saving detail by account number
 
@@ -318,7 +322,7 @@ class MBBank:
             accType (Literal["OSA", "SBA"]): saving account type | OSA: Online Saving Account, SBA: Saving Bank Account
 
         Returns:
-            success (dict): saving detail
+            success (c): saving detail
 
         Raises:
             MBBankError: if api response not ok
@@ -328,22 +332,23 @@ class MBBank:
             "accType": accType
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getDetail", json=json_data)
-        return data_out
+        return SavingDetailResponseModal.model_validate(data_out, strict=True)
 
-    def getLoanList(self):
+    def getLoanList(self) -> LoanListResponseModal:
         """
         Get all loan list from your account
 
         Returns:
-            success (dict): loan list
+            success (LoanListResponseModal): loan list
 
         Raises:
             MBBankError: if api response not ok
         """
         data_out = self._req("https://online.mbbank.com.vn/api/retail-web-onlineloanms/loan/getList")
-        return data_out
+        return LoanListResponseModal.model_validate(data_out, strict=True)
 
-    def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime):
+    def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime,
+                                  to_date: datetime.datetime) -> CardTransactionsResponseModal:
         """
         Get card transaction history
 
@@ -353,7 +358,7 @@ class MBBank:
             to_date (datetime.datetime): to date
 
         Returns:
-            success (dict): card transaction history
+            success (CardListResponseModal): card transaction history
 
         Raises:
             MBBankError: if api response not ok
@@ -367,14 +372,14 @@ class MBBank:
             "type": "CARD",
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getTransactionHistory", json=json_data)
-        return data_out
+        return CardTransactionsResponseModal.model_validate(data_out, strict=True)
 
-    def getBankList(self):
+    def getBankList(self) -> BankListResponseModal:
         """
         Get transfer all bank list
 
         Returns:
-            success (dict): bank list
+            success (BankListResponseModal): bank list
 
         Raises:
             MBBankError: if api response not ok
@@ -382,7 +387,7 @@ class MBBank:
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
         return BankListResponseModal.model_validate(data_out, strict=True)
 
-    def getAccountByPhone(self, phone: str):
+    def getAccountByPhone(self, phone: str) -> AccountByPhoneResponseModal:
         """
         Get transfer account info by phone (MBank internal account only)
 
@@ -390,29 +395,27 @@ class MBBank:
             phone (str): MBBank account phone number
 
         Returns:
-            success (dict): account info
+            success (AccountByPhoneResponseModal): account info
 
+        Raises:
+            MBBankError: if api response not ok
         """
         json_data = {
             "phone": phone
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone", json=json_data)
-        return data_out
+        return AccountByPhoneResponseModal.model_validate(data_out, strict=True)
 
-    def userinfo(self):
+    def userinfo(self) -> UserInfoResponseModal:
         """
         Get current user info
 
         Returns:
-            success (dict): user info
+            success (UserInfoResponseModal): user info
 
         Raises:
             MBBankError: if api response not ok
         """
         if self._userinfo is None:
             self._authenticate()
-        else:
-            self.getBalance()
-        return self._userinfo
-
-
+        return UserInfoResponseModal.model_validate(self._userinfo, strict=True)

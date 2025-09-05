@@ -1,4 +1,4 @@
-from base import BaseResponseModal, Account
+from .base import BaseResponseModal, Account
 from typing import List
 
 
