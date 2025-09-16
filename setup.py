@@ -19,7 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/thedtvn/MBBank',
     author='The DT',
-    packages=["mbbank", "mbbank.wasm_helper"],
+    packages=["mbbank", "mbbank.wasm_helper", "mbbank.modals"],
     install_requires=req,
     include_package_data=True
 )
