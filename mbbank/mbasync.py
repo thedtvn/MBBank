@@ -29,7 +29,7 @@ class MBBankAsync(MBBank):
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to CapchaOCR().
     """
 
-    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[typing.Type[CapchaProcessing]] =None):
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[CapchaProcessing] =None):
         super().__init__(username=username, password=password, proxy=proxy, ocr_class=ocr_class)
         # convert proxy dict by requests to aiohttp format
         if proxy is not None:
