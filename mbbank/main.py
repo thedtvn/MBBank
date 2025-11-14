@@ -50,7 +50,7 @@ class MBBank:
 
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username: str, password: str, proxy: dict = None, ocr_class=None):
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[typing.Type[CapchaProcessing]] =None):
         self._userid = username
         self._password = password
         self._wasm_cache = None
@@ -67,7 +67,7 @@ class MBBank:
         self.sessionId = None
         self._userinfo = None
         self._temp = {}
-        self.deviceIdCommon = f'i1vzyjp5-mbib-0000-0000-{self._get_now_time()}'
+        self.deviceIdCommon = f'abi2jojr-mbib-0000-0000-{self._get_now_time()}'
 
     def _get_now_time(self):
         now = datetime.datetime.now()
@@ -133,12 +133,11 @@ class MBBank:
         headers["X-Request-Id"] = rid
         headers["Deviceid"] = self.deviceIdCommon
         headers["Refno"] = rid
-        with requests.Session() as s:
-            with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
+        with requests.post("https://online.mbbank.com.vn/api/retail-internetbankingms/getCaptchaImage",
                         headers=headers, json=json_data,
                         proxies=self.proxy) as r:
-                data_out = r.json()
-                return base64.b64decode(data_out["imageString"])
+            data_out = r.json()
+            return base64.b64decode(data_out["imageString"])
 
     def login(self, captcha_text: str):
         """
@@ -161,15 +160,15 @@ class MBBank:
         }
         wasm_bytes = self._get_wasm_file()
         data_encrypt = wasm_encrypt(wasm_bytes, payload)
-        with requests.Session() as s:
-            with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
+        with requests.post("https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
                         headers=headers_default, json={"dataEnc": data_encrypt},
                         proxies=self.proxy) as r:
-                data_out = r.json()
+            data_out = r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
             data_out.pop("result", None)
             self._userinfo = data_out
+            self._verify_biometric_check()
             return
         else:
             raise MBBankError(data_out["result"])
@@ -187,8 +186,11 @@ class MBBank:
                 if e.code == "GW283":
                     continue  # capcha error, try again
                 raise e
+            
+    def _verify_biometric_check(self):
+        self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
-    def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
+    def getTransactionAccountHistory(self, *, accountNo: typing.Optional[str] = None, from_date: datetime.datetime,
                                      to_date: datetime.datetime) -> TransactionHistoryResponseModal:
         """
         Get account transaction history
@@ -228,7 +230,7 @@ class MBBank:
         """
         if self._userinfo is None:
             self._authenticate()
-        data_out = self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-accountms/accountms/getBalance")
         return BalanceResponseModal.model_validate(data_out, strict=True)
 
     def getBalanceLoyalty(self) -> BalanceLoyaltyResponseModal:
@@ -265,7 +267,7 @@ class MBBank:
         return InterestRateResponseModal.model_validate(data_out, strict=True)
 
     def getFavorBeneficiaryList(self, *, transactionType: typing.Literal["TRANSFER", "PAYMENT"],
-                                searchType: typing.Literal["MOST", "LATEST"]) -> UserInfoResponseModal:
+                                searchType: typing.Literal["MOST", "LATEST"]) -> BeneficiaryListResponseModal:
         """
         Get all favor or most transfer beneficiary list from your account
 
@@ -274,7 +276,7 @@ class MBBank:
             searchType (Literal["MOST", "LATEST"]): search type
 
         Returns:
-            success (UserInfoResponseModal): favor beneficiary list
+            success (BeneficiaryListResponseModal): favor beneficiary list
 
         Raises:
             MBBankError: if api response not ok
@@ -310,7 +312,7 @@ class MBBank:
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-savingms/saving/v3.0/getList")
         return SavingListResponseModal.model_validate(data_out, strict=True)
 
     def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]) -> SavingDetailResponseModal:
@@ -344,7 +346,7 @@ class MBBank:
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = self._req("https://online.mbbank.com.vn/api/retail-web-onlineloanms/loan/getList")
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-onlineloanms/loan/getList")
         return LoanListResponseModal.model_validate(data_out, strict=True)
 
     def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime,

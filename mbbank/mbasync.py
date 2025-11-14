@@ -5,19 +5,14 @@ import base64
 import hashlib
 import typing
 import aiohttp
+
+from .capcha_ocr import CapchaProcessing
 from .main import MBBankError, MBBank
 from .wasm_helper import wasm_encrypt
 from .main import headers_default
 from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal, CardTransactionsResponseModal, SavingDetailResponseModal
 
 pool = concurrent.futures.ThreadPoolExecutor() # thread pool for blocking tasks like OCR and wasm
-
-
-def get_now_time():
-    now = datetime.datetime.now()
-    microsecond = int(now.strftime("%f")[:2])
-    return now.strftime(f"%Y%m%d%H%M{microsecond}")
-
 
 class MBBankAsync(MBBank):
     """Core Async class
@@ -33,18 +28,22 @@ class MBBankAsync(MBBank):
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to CapchaOCR().
     """
 
-    def __init__(self, *, username: str, password: str, proxy: dict = None, ocr_class=None):
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[typing.Type[CapchaProcessing]] =None):
         super().__init__(username=username, password=password, proxy=proxy, ocr_class=ocr_class)
         # convert proxy dict by requests to aiohttp format
-        if len(self.proxy.values()):
-            self.proxy = self.proxy.values()[0]
+        if proxy is not None:
+            self.proxy = proxy
         else:
             self.proxy = None
+
+    def _create_session(self) -> aiohttp.ClientSession:
+        # for future config custom ssl or connector
+        return aiohttp.ClientSession()
 
     async def _get_wasm_file(self):
         if self._wasm_cache is not None:
             return self._wasm_cache
-        async with aiohttp.ClientSession() as s:
+        async with self._create_session() as s:
             async with s.get("https://online.mbbank.com.vn/assets/wasm/main.wasm", headers=headers_default,
                              proxy=self.proxy) as r:
                 self._wasm_cache = await r.read()
@@ -57,7 +56,7 @@ class MBBankAsync(MBBank):
         Returns:
             success (bytes): capcha image as bytes
         """
-        rid = f"{self._userid}-{get_now_time()}"
+        rid = f"{self._userid}-{self._get_now_time()}"
         json_data = {
             'sessionId': "",
             'refNo': rid,
@@ -67,9 +66,9 @@ class MBBankAsync(MBBank):
         headers["X-Request-Id"] = rid
         headers["Deviceid"] = self.deviceIdCommon
         headers["Refno"] = rid
-        async with aiohttp.ClientSession() as s:
-            async with s.post("https://online.mbbank.com.vn/retail-web-internetbankingms/getCaptchaImage",
-                              headers=headers, json=json_data, proxy=self.proxy) as r:
+        async with self._create_session() as s:
+            async with s.post("https://online.mbbank.com.vn/api/retail-internetbankingms/getCaptchaImage",
+                              headers=headers, json=json_data) as r:
                 data_out = await r.json()
                 return base64.b64decode(data_out["imageString"])
 
@@ -88,23 +87,28 @@ class MBBankAsync(MBBank):
             "password": hashlib.md5(self._password.encode()).hexdigest(),
             "captcha": captcha_text,
             'sessionId': "",
-            'refNo': f'{self._userid}-{get_now_time()}',
+            'refNo': f'{self._userid}-{self._get_now_time()}',
             'deviceIdCommon': self.deviceIdCommon,
             "ibAuthen2faString": self.FPR,
         }
         wasm_bytes = await self._get_wasm_file()
         loop = asyncio.get_running_loop()
         data_encrypt = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, payload)
-        async with aiohttp.ClientSession() as s:
-            async with s.post("https://online.mbbank.com.vn/retail_web/internetbanking/doLogin",
+        async with self._create_session() as s:
+            async with s.post("https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
                               headers=headers_default, json={"dataEnc": data_encrypt}, proxy=self.proxy) as r:
                 data_out = await r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
+            data_out.pop("result", None)
             self._userinfo = data_out
+            await self._verify_biometric_check()
             return
         else:
             raise MBBankError(data_out["result"])
+            
+    async def _verify_biometric_check(self):
+        await self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
     async def _authenticate(self):
         while True:
@@ -130,7 +134,7 @@ class MBBankAsync(MBBank):
         while True:
             if self.sessionId is None:
                 await self._authenticate()
-            rid = f"{self._userid}-{get_now_time()}"
+            rid = f"{self._userid}-{self._get_now_time()}"
             json_data = {
                 'sessionId': self.sessionId if self.sessionId is not None else "",
                 'refNo': rid,
@@ -141,7 +145,7 @@ class MBBankAsync(MBBank):
             headers["X-Request-Id"] = rid
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
-            async with aiohttp.ClientSession() as s:
+            async with self._create_session() as s:
                 async with s.post(url, headers=headers, json=json_data, proxy=self.proxy) as r:
                     data_out = await r.json()
             if data_out["result"] is None:
@@ -155,7 +159,7 @@ class MBBankAsync(MBBank):
                 raise MBBankError(data_out["result"])
         return data_out
 
-    async def getTransactionAccountHistory(self, *, accountNo: str = None, from_date: datetime.datetime,
+    async def getTransactionAccountHistory(self, *, accountNo: typing.Optional[str] = None, from_date: datetime.datetime,
                                            to_date: datetime.datetime) -> TransactionHistoryResponseModal:
         """
         Get account transaction history
@@ -171,6 +175,8 @@ class MBBankAsync(MBBank):
         Raises:
             MBBankError: if api response not ok
         """
+        if self._userinfo is None:
+            await self._authenticate()
         json_data = {
             'accountNo': self._userid if accountNo is None else accountNo,
             'fromDate': from_date.strftime("%d/%m/%Y"),
@@ -191,7 +197,9 @@ class MBBankAsync(MBBank):
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail-web-accountms/getBalance")
+        if self._userinfo is None:
+            await self._authenticate()
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail-accountms/accountms/getBalance")
         return BalanceResponseModal.model_validate(data_out, strict=True)
 
     async def getBalanceLoyalty(self) -> BalanceLoyaltyResponseModal:
@@ -273,7 +281,7 @@ class MBBankAsync(MBBank):
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail_web/saving/getList")
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail-savingms/saving/v3.0/getList")
         return SavingListResponseModal.model_validate(data_out, strict=True)
 
     async def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]) -> SavingDetailResponseModal:
@@ -307,7 +315,7 @@ class MBBankAsync(MBBank):
         Raises:
             MBBankError: if api response not ok
         """
-        data_out = await self._req("https://online.mbbank.com.vn/api/retail-web-onlineloanms/loan/getList")
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail-onlineloanms/loan/getList")
         return LoanListResponseModal.model_validate(data_out, strict=True)
 
     async def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime) -> CardTransactionsResponseModal:
