@@ -50,7 +50,7 @@ class MBBank:
 
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[typing.Type[CapchaProcessing]] =None):
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[CapchaProcessing] = None):
         self._userid = username
         self._password = password
         self._wasm_cache = None
