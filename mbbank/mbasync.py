@@ -73,7 +73,7 @@ class MBBankAsync(MBBank):
         headers["Refno"] = rid
         async with self._create_session() as s:
             async with s.post("https://online.mbbank.com.vn/api/retail-internetbankingms/getCaptchaImage",
-                              headers=headers, json=json_data) as r:
+                              headers=headers, json=json_data, proxy=self.proxy) as r:
                 data_out = await r.json()
                 return base64.b64decode(data_out["imageString"])
 
