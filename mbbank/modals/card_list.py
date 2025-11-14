@@ -16,7 +16,7 @@ class Card(BaseModel):
     cardFlag: Optional[str]
     cardLvl: Optional[str]
     cardNm: Optional[str]
-    cardNo: Optional[str]
+    cardNo: str
     cardPrdCd: Optional[str]
     cardTyp: Optional[str]
     ccyCd: Optional[str]
