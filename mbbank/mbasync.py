@@ -3,6 +3,7 @@ import concurrent.futures
 import datetime
 import base64
 import hashlib
+import ssl
 import typing
 import aiohttp
 
@@ -37,8 +38,12 @@ class MBBankAsync(MBBank):
             self.proxy = None
 
     def _create_session(self) -> aiohttp.ClientSession:
-        # for future config custom ssl or connector
-        return aiohttp.ClientSession()
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.set_ciphers("DEFAULT:@SECLEVEL=1")  # make it look like a normal browser request or requests
+        connector = aiohttp.TCPConnector(
+            ssl=ssl_ctx
+        )
+        return aiohttp.ClientSession(connector=connector)
 
     async def _get_wasm_file(self):
         if self._wasm_cache is not None:
