@@ -10,6 +10,8 @@ from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListR
     LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal \
     , CardTransactionsResponseModal, SavingDetailResponseModal
 
+HTTP_TIMEOUT = 120
+
 headers_default = {
     'Cache-Control': 'max-age=0',
     'Accept': 'application/json, text/plain, */*',
@@ -112,7 +114,7 @@ class MBBank:
         if self._wasm_cache is not None:
             return self._wasm_cache
         file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm",
-                                 proxies=self.proxy).content
+                                 timeout=HTTP_TIMEOUT,proxies=self.proxy).content
         self._wasm_cache = file_data
         return file_data
 
@@ -134,7 +136,7 @@ class MBBank:
         headers["Deviceid"] = self.deviceIdCommon
         headers["Refno"] = rid
         with requests.post("https://online.mbbank.com.vn/api/retail-internetbankingms/getCaptchaImage",
-                        headers=headers, json=json_data,
+                        headers=headers, json=json_data,timeout=HTTP_TIMEOUT,
                         proxies=self.proxy) as r:
             data_out = r.json()
             return base64.b64decode(data_out["imageString"])
@@ -161,7 +163,7 @@ class MBBank:
         wasm_bytes = self._get_wasm_file()
         data_encrypt = wasm_encrypt(wasm_bytes, payload)
         with requests.post("https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
-                        headers=headers_default, json={"dataEnc": data_encrypt},
+                        headers=headers_default, json={"dataEnc": data_encrypt},timeout=HTTP_TIMEOUT,
                         proxies=self.proxy) as r:
             data_out = r.json()
         if data_out["result"]["ok"]:
