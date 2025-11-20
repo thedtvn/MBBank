@@ -11,9 +11,13 @@ from .capcha_ocr import CapchaProcessing
 from .main import MBBankError, MBBank
 from .wasm_helper import wasm_encrypt
 from .main import headers_default
-from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal, CardTransactionsResponseModal, SavingDetailResponseModal
+from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
+    BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, \
+    LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal, \
+    CardTransactionsResponseModal, SavingDetailResponseModal
 
-pool = concurrent.futures.ThreadPoolExecutor() # thread pool for blocking tasks like OCR and wasm
+pool = concurrent.futures.ThreadPoolExecutor()  # thread pool for blocking tasks like OCR and wasm
+
 
 class MBBankAsync(MBBank):
     """Core Async class
@@ -27,15 +31,27 @@ class MBBankAsync(MBBank):
         password (str): MBBank Account Password
         proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): CapchaProcessing class. Defaults to CapchaOCR().
+        retry_times (int, optional): number of retry times for capcha processing. Defaults to 30 ( worst case ).
+        timeout (Union[float, Tuple[float, float]], optional): request timeout in seconds or (connect timeout, read timeout) or None for no timeout. Defaults to None.
     """
 
-    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[CapchaProcessing] =None):
-        super().__init__(username=username, password=password, proxy=proxy, ocr_class=ocr_class)
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None,
+                 ocr_class: typing.Optional[CapchaProcessing] = None,
+                 retry_times: int = 30,
+                 timeout: typing.Union[float, typing.Tuple[float, float], None] = None):
+        super().__init__(username=username, password=password, ocr_class=ocr_class, retry_times=retry_times)
         # convert proxy dict by requests to aiohttp format
         if proxy is not None:
             self.proxy = proxy
         else:
             self.proxy = None
+        if timeout is not None:
+            if isinstance(timeout, tuple) and len(timeout) == 2:
+                self.timeout = aiohttp.ClientTimeout(connect=timeout[0], sock_read=timeout[1])
+            else:
+                self.timeout = aiohttp.ClientTimeout(total=timeout)
+        else:
+            self.timeout = None
 
     def _create_session(self) -> aiohttp.ClientSession:
         ssl_ctx = ssl.create_default_context()
@@ -43,7 +59,12 @@ class MBBankAsync(MBBank):
         connector = aiohttp.TCPConnector(
             ssl=ssl_ctx
         )
-        return aiohttp.ClientSession(connector=connector)
+        session_args = {
+            "connector": connector,
+        }
+        if self.timeout is not None:
+            session_args["timeout"] = self.timeout
+        return aiohttp.ClientSession(**session_args)
 
     async def _get_wasm_file(self):
         if self._wasm_cache is not None:
@@ -111,7 +132,7 @@ class MBBankAsync(MBBank):
             return
         else:
             raise MBBankError(data_out["result"])
-            
+
     async def _verify_biometric_check(self):
         await self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
@@ -128,7 +149,7 @@ class MBBankAsync(MBBank):
                 return await self.login(text)
             except MBBankError as e:
                 if e.code == "GW283":
-                    continue # capcha error, try again
+                    continue  # capcha error, try again
                 raise e
 
     async def _req(self, url, *, json=None, headers=None):
@@ -164,7 +185,8 @@ class MBBankAsync(MBBank):
                 raise MBBankError(data_out["result"])
         return data_out
 
-    async def getTransactionAccountHistory(self, *, accountNo: typing.Optional[str] = None, from_date: datetime.datetime,
+    async def getTransactionAccountHistory(self, *, accountNo: typing.Optional[str] = None,
+                                           from_date: datetime.datetime,
                                            to_date: datetime.datetime) -> TransactionHistoryResponseModal:
         """
         Get account transaction history
@@ -323,7 +345,8 @@ class MBBankAsync(MBBank):
         data_out = await self._req("https://online.mbbank.com.vn/api/retail-onlineloanms/loan/getList")
         return LoanListResponseModal.model_validate(data_out, strict=True)
 
-    async def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime, to_date: datetime.datetime) -> CardTransactionsResponseModal:
+    async def getCardTransactionHistory(self, cardNo: str, from_date: datetime.datetime,
+                                        to_date: datetime.datetime) -> CardTransactionsResponseModal:
         """
         Get card transaction history
 

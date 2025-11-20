@@ -46,11 +46,16 @@ class MBBank:
         password (str): MBBank Account Password
         proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): instance of CapchaProcessing class. Defaults to CapchaOCR().
+        retry_times (int, optional): number of retry times for capcha processing. Defaults to 30 ( worst case ).
+        timeout (Union[float, Tuple[float, float]], optional): request timeout in seconds or (connect timeout, read timeout) or None for no timeout. Defaults to None.
     """
 
     FPR = "c7a1beebb9400375bb187daa33de9659"
 
-    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None, ocr_class: typing.Optional[CapchaProcessing] = None):
+    def __init__(self, *, username: str, password: str, proxy: typing.Optional[str] = None,
+                 ocr_class: typing.Optional[CapchaProcessing] = None,
+                 retry_times: int = 30,
+                 timeout: typing.Union[float, typing.Tuple[float, float], None] = None):
         self._userid = username
         self._password = password
         self._wasm_cache = None
@@ -68,6 +73,8 @@ class MBBank:
         self._userinfo = None
         self._temp = {}
         self.deviceIdCommon = f'abi2jojr-mbib-0000-0000-{self._get_now_time()}'
+        self.retry_times = retry_times
+        self.timeout = timeout
 
     def _get_now_time(self):
         now = datetime.datetime.now()
@@ -93,10 +100,9 @@ class MBBank:
             headers["X-Request-Id"] = rid
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
-            with requests.Session() as s:
-                with s.post(url, headers=headers, json=json_data,
-                            proxies=self.proxy) as r:
-                    data_out = r.json()
+            with requests.post(url, headers=headers, json=json_data,
+                               proxies=self.proxy) as r:
+                data_out = r.json()
             if data_out["result"] is None:
                 self.getBalance()
             elif data_out["result"]["ok"]:
@@ -112,7 +118,7 @@ class MBBank:
         if self._wasm_cache is not None:
             return self._wasm_cache
         file_data = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm",
-                                 proxies=self.proxy).content
+                                 proxies=self.proxy, timeout=self.timeout).content
         self._wasm_cache = file_data
         return file_data
 
@@ -134,8 +140,8 @@ class MBBank:
         headers["Deviceid"] = self.deviceIdCommon
         headers["Refno"] = rid
         with requests.post("https://online.mbbank.com.vn/api/retail-internetbankingms/getCaptchaImage",
-                        headers=headers, json=json_data,
-                        proxies=self.proxy) as r:
+                           headers=headers, json=json_data,
+                           proxies=self.proxy, timeout=self.timeout) as r:
             data_out = r.json()
             return base64.b64decode(data_out["imageString"])
 
@@ -161,8 +167,8 @@ class MBBank:
         wasm_bytes = self._get_wasm_file()
         data_encrypt = wasm_encrypt(wasm_bytes, payload)
         with requests.post("https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
-                        headers=headers_default, json={"dataEnc": data_encrypt},
-                        proxies=self.proxy) as r:
+                           headers=headers_default, json={"dataEnc": data_encrypt},
+                           proxies=self.proxy, timeout=self.timeout) as r:
             data_out = r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
@@ -186,7 +192,7 @@ class MBBank:
                 if e.code == "GW283":
                     continue  # capcha error, try again
                 raise e
-            
+
     def _verify_biometric_check(self):
         self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
