@@ -8,7 +8,7 @@ import typing
 import aiohttp
 
 from .capcha_ocr import CapchaProcessing
-from .main import MBBankError, MBBank
+from .main import MBBankError, MBBank, CapchaError
 from .wasm_helper import wasm_encrypt
 from .main import headers_default
 from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
@@ -137,7 +137,8 @@ class MBBankAsync(MBBank):
         await self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
     async def _authenticate(self):
-        while True:
+        try_count = 0
+        while try_count < self.retry_times:
             self._userinfo = None
             self.sessionId = None
             self._temp = {}
@@ -151,6 +152,7 @@ class MBBankAsync(MBBank):
                 if e.code == "GW283":
                     continue  # capcha error, try again
                 raise e
+        raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
 
     async def _req(self, url, *, json=None, headers=None):
         if headers is None:
