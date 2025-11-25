@@ -175,7 +175,8 @@ class MBBankAsync(MBBank):
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             async with self._create_session() as s:
-                async with s.post(url, headers=headers, json=json_data, proxy=self.proxy) as r:
+                async with s.post(url, headers=headers, json=json_data,
+                                  proxy=self.proxy, timeout=self.timeout) as r:
                     data_out = await r.json()
             if data_out["result"] is None:
                 await self.getBalance()
