@@ -33,9 +33,11 @@ class MBBankError(Exception):
         self.message = err_out['message']
         super().__init__(f"{err_out['responseCode']} | {err_out['message']}")
 
+
 class CapchaError(MBBankError):
     def __init__(self, err_out):
         super().__init__(err_out)
+
 
 class MBBank:
     """Core class
@@ -198,7 +200,6 @@ class MBBank:
                     continue  # capcha error, try again
                 raise e
         raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
-        
 
     def _verify_biometric_check(self):
         self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
