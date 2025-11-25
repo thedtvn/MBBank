@@ -104,7 +104,7 @@ class MBBank:
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             with requests.post(url, headers=headers, json=json_data,
-                               proxies=self.proxy) as r:
+                               proxies=self.proxy, timeout=self.timeout) as r:
                 data_out = r.json()
             if data_out["result"] is None:
                 self.getBalance()
