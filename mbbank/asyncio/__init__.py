@@ -7,11 +7,12 @@ import ssl
 import typing
 import aiohttp
 
-from .capcha_ocr import CapchaProcessing
-from .main import MBBankError, MBBank, CapchaError
-from .wasm_helper import wasm_encrypt
-from .main import headers_default
-from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
+from mbbank.capcha_ocr import CapchaProcessing
+from mbbank.main import MBBank
+from mbbank.wasm_helper import wasm_encrypt
+from mbbank.main import headers_default
+from mbbank.errors import CapchaError, MBBankError
+from mbbank.modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
     BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, \
     LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal, \
     CardTransactionsResponseModal, SavingDetailResponseModal

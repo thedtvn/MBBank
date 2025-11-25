@@ -8,7 +8,9 @@ from .wasm_helper import wasm_encrypt
 from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListResponseModal, \
     BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, \
     LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal \
-    , CardTransactionsResponseModal, SavingDetailResponseModal
+    , CardTransactionsResponseModal, SavingDetailResponseModal, SavedBeneficiaryListResponseModal, \
+    AccountNameResponseModal
+from .errors import CapchaError, MBBankError
 
 headers_default = {
     'Cache-Control': 'max-age=0',
@@ -25,17 +27,6 @@ headers_default = {
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
 }
-
-
-class MBBankError(Exception):
-    def __init__(self, err_out):
-        self.code = err_out['responseCode']
-        self.message = err_out['message']
-        super().__init__(f"{err_out['responseCode']} | {err_out['message']}")
-
-class CapchaError(MBBankError):
-    def __init__(self, err_out):
-        super().__init__(err_out)
 
 class MBBank:
     """Core class
@@ -198,7 +189,6 @@ class MBBank:
                     continue  # capcha error, try again
                 raise e
         raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
-        
 
     def _verify_biometric_check(self):
         self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
@@ -420,6 +410,47 @@ class MBBank:
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getAccountByPhone", json=json_data)
         return AccountByPhoneResponseModal.model_validate(data_out, strict=True)
+
+    def getSavedBeneficiary(self) -> SavedBeneficiaryListResponseModal:
+        """
+        Get all saved beneficiary list from your account.
+
+        Returns:
+            success (SavedBeneficiaryListResponseModal): saved beneficiary list
+        Raises:
+            MBBankError: if api response not ok
+        """
+        json_data = {
+            "type": "TRANSFER"
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBeneficiary", json=json_data)
+        return SavedBeneficiaryListResponseModal.model_validate(data_out, strict=True)
+    
+    def getAccountName(self, accountNo: str, bankCode: str, debitAccount: str) -> AccountNameResponseModal:
+        """
+        Get account name by account number
+
+        Args:
+            accountNo (str): account number that you want to get name
+            bankCode (str): bank code get from getBankList
+            debitAccount (str): your account number to transfer from
+
+        Returns:
+            success (AccountNameResponseModal): account obj
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        # TODO: create modal for response
+        json_data = {
+            "creditAccount": accountNo,
+            "creditAccountType": "ACCOUNT",
+            "bankCode": bankCode,
+            "debitAccount": debitAccount,
+            "remark": ""
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/transfer/v1.0/inquiry-account-name", json=json_data)
+        return AccountNameResponseModal.model_validate(data_out, strict=True)
 
     def userinfo(self) -> UserInfoResponseModal:
         """

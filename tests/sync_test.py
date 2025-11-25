@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+from test_data import TEST_ACCOUNT
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -25,7 +26,7 @@ mb.getBalanceLoyalty()
 mb.getLoanList()
 for i in ["TRANSFER", "PAYMENT"]:
     for a in ["MOST", "LATEST"]:
-        mb.getFavorBeneficiaryList(transactionType=i, searchType=a) # type: ignore this use typing.Literal
+        mb.getFavorBeneficiaryList(transactionType=i, searchType=a)  # type: ignore this use typing.Literal
 card_list = mb.getCardList()
 for i in card_list.cardList:
     mb.getCardTransactionHistory(i.cardNo, start_query_day, end_query_day)
@@ -35,4 +36,13 @@ for i in saving_list.data.onlineFixedSaving.data:
 for i in saving_list.data.branchSaving.data:
     mb.getSavingDetail(i.savingAccountNumber, "SBA")
 mb.getTransactionAccountHistory(from_date=start_query_day, to_date=end_query_day)
+mb.getSavedBeneficiary()
+for acc in TEST_ACCOUNT:
+    name = mb.getAccountName(
+        accountNo=acc["account_id"],
+        bankCode=acc["bank_code"],
+        debitAccount=username
+    ).benName
+    if name != acc["account_name"]:
+        raise ValueError(f"Account name mismatch for {acc['account_id']}: expected '{acc['account_name']}', got '{name}'")
 print("All sync tests completed.")

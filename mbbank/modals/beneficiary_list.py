@@ -63,3 +63,11 @@ class BeneficiaryListResponseModal(BaseResponseModal):
     if transactionType is "PAYMENT", the list contains BeneficiaryPayment objects.
     """
     favorBeneficiaryList: List[Union[BeneficiaryTransfer, BeneficiaryPayment]]
+    
+    
+class SavedBeneficiaryListResponseModal(BaseResponseModal):
+    """
+    Model representing the response for a list of saved beneficiaries.
+    """
+    baseFtList: List[BeneficiaryTransfer]
+    billPayeeList: Optional[List[BeneficiaryPayment]] = None
