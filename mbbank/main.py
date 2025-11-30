@@ -9,8 +9,8 @@ from .modals import BalanceResponseModal, BalanceLoyaltyResponseModal, BankListR
     BeneficiaryListResponseModal, CardListResponseModal, AccountByPhoneResponseModal, UserInfoResponseModal, \
     LoanListResponseModal, SavingListResponseModal, InterestRateResponseModal, TransactionHistoryResponseModal \
     , CardTransactionsResponseModal, SavingDetailResponseModal, SavedBeneficiaryListResponseModal, \
-    AccountNameResponseModal
-from .errors import CapchaError, MBBankError
+    AccountNameResponseModal, ServiceTokenResponseModal, ATMCardIDResponseModal, ATMAccountNameResponseModal, Bank
+from .errors import CapchaError, MBBankError, CardBankNotFoundError
 
 headers_default = {
     'Cache-Control': 'max-age=0',
@@ -27,6 +27,7 @@ headers_default = {
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
 }
+
 
 class MBBank:
     """Core class
@@ -173,13 +174,24 @@ class MBBank:
         else:
             raise MBBankError(data_out["result"])
 
+    def getServiceToken(self) -> ServiceTokenResponseModal:
+        """
+        Get service token for external service usage
+
+        Returns:
+            success (ServiceTokenResponseModal): service token
+        """
+        if self._userinfo is None:
+            self._authenticate()
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
+        return ServiceTokenResponseModal.model_validate(data_out, strict=True)
+
     def _authenticate(self):
         try_count = 0
         while try_count < self.retry_times:
             try_count += 1
             self._userinfo = None
             self.sessionId = None
-            self._temp = {}
             img_bytes = self.get_capcha_image()
             captcha_text = self.ocr_class.process_image(img_bytes)
             try:
@@ -389,7 +401,11 @@ class MBBank:
         Raises:
             MBBankError: if api response not ok
         """
+        if 'bank_list' in self._temp:
+            return BankListResponseModal.model_validate(self._temp['bank_list'],
+                                                        strict=True)  # use cache seen as bank list not change often
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
+        self._temp['bank_list'] = data_out
         return BankListResponseModal.model_validate(data_out, strict=True)
 
     def getAccountByPhone(self, phone: str) -> AccountByPhoneResponseModal:
@@ -425,7 +441,7 @@ class MBBank:
         }
         data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBeneficiary", json=json_data)
         return SavedBeneficiaryListResponseModal.model_validate(data_out, strict=True)
-    
+
     def getAccountName(self, accountNo: str, bankCode: str, debitAccount: str) -> AccountNameResponseModal:
         """
         Get account name by account number
@@ -449,8 +465,76 @@ class MBBank:
             "debitAccount": debitAccount,
             "remark": ""
         }
-        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/transfer/v1.0/inquiry-account-name", json=json_data)
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/transfer/v1.0/inquiry-account-name",
+                             json=json_data)
         return AccountNameResponseModal.model_validate(data_out, strict=True)
+
+    def getATMCardID(self, cardNumber: str) -> ATMCardIDResponseModal:
+        """
+        Get ATM Card ID by card number
+
+        Args:
+            cardNumber (str): card number
+
+        Returns:
+            success (ATMCardIDResponseModal): ATM Card ID response
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        service_token = self.getServiceToken()
+        headers = headers_default.copy()
+        headers["authorization"] = service_token.type + " " + service_token.token
+        json_data = {
+            "cardNumber": cardNumber,
+            "requestID": f"{self._userid}-{self._get_now_time()}"
+        }
+        with requests.post("https://mbcard.mbbank.com.vn:8446/mbcardgw/internet/cardinfo/v1_0/generateid",
+                           headers=headers, json=json_data,
+                           proxies=self.proxy, timeout=self.timeout) as r:
+            data_out = r.json()
+        return ATMCardIDResponseModal.model_validate(data_out, strict=True)
+
+    def getATMAccountName(self, cardNumber: str, debitAccount: str) -> ATMAccountNameResponseModal:
+        """
+        Get ATM Account Name by card number
+
+        Args:
+            cardNumber (str): card number
+            debitAccount (str): your account number to transfer from
+
+        Returns:
+            success (ATMAccountNameResponseModal): ATM Account Name response
+
+        Raises:
+            MBBankError: if api response not ok
+        """
+        card_id = self.getATMCardID(cardNumber=cardNumber)
+        if card_id.errorInfo.code != "00":
+            raise MBBankError({
+                "responseCode": card_id.errorInfo.code,
+                "message": card_id.errorInfo.message
+            })
+        bank_list = self.getBankList()
+        bank_info: typing.Optional[Bank] = None
+        for bank in bank_list.bankList:
+            if cardNumber.startswith(bank.smlCode):
+                bank_info = bank
+                break
+        if bank_info is None:
+            raise CardBankNotFoundError("ATM Card Bank not found in bank list")
+        json_data = {
+            "creditAccount": card_id.cardID,
+            "bankCode": bank_info.smlCode,
+            "type": bank_info.typeTransfer,
+            "creditAccountType": "CARD",
+            "creditCardNo": cardNumber,
+            "debitAccount": debitAccount,
+            "remark": ""
+        }
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/transfer/inquiryAccountName",
+                             json=json_data)
+        return ATMAccountNameResponseModal.model_validate(data_out, strict=True)
 
     def userinfo(self) -> UserInfoResponseModal:
         """

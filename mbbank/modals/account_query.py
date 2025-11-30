@@ -1,5 +1,5 @@
 from .base import BaseResponseModal, Account
-from typing import List, Optional
+from typing import List, Optional, Any
 
 
 class AccountByPhoneResponseModal(BaseResponseModal):
@@ -23,3 +23,10 @@ class AccountNameResponseModal(BaseResponseModal):
     bankCode: Optional[str]
     benT24AcctNumber: Optional[str]
     queryChannel: Optional[str]
+    
+class ATMAccountNameResponseModal(BaseResponseModal):
+    """
+    Model for the get ATM account name response
+    """
+    benName: Optional[str]
+    category: Optional[Any] = None

@@ -12,10 +12,14 @@ from .saving_list import SavingListResponseModal, SavingInfo
 from .saving_detail import SavingDetailResponseModal, SavingDetail
 from .userinfo import UserInfoResponseModal, UserInfoCardModel, CustModel, MenuModel, MenuManagerModel, \
     UserInfoAccountModel, SoftTokenModel, SectorDetailModel, InterfaceTypeModel, BiometricAuthDeviceModel
-from .account_query import AccountByPhoneResponseModal, AccountNameResponseModal
-from .base import Account
+from .account_query import AccountByPhoneResponseModal, AccountNameResponseModal, ATMAccountNameResponseModal
+from .base import Account, ServiceTokenResponseModal
+from .external_service import ATMCardIDResponseModal
 
 __all__ = [
+    "ATMAccountNameResponseModal",
+    "ATMCardIDResponseModal",
+    "ServiceTokenResponseModal",
     "BalanceResponseModal",
     "BalanceLoyaltyResponseModal",
     "BalanceLoyalty",

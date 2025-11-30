@@ -5,6 +5,10 @@ class MBBankError(Exception):
         super().__init__(f"{err_out['responseCode']} | {err_out['message']}")
 
 
-class CapchaError(MBBankError):
+class CapchaError(Exception):
+    def __init__(self, err_out):
+        super().__init__(err_out)
+
+class CardBankNotFoundError(Exception):
     def __init__(self, err_out):
         super().__init__(err_out)

@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
 
-__all__ = ["BaseResponseModal", "Account"]
+__all__ = ["BaseResponseModal", "Account", "ServiceTokenResponseModal"]
 
 class BaseResponseModal(BaseModel):
     refNo: str
@@ -29,3 +29,10 @@ class Account(BaseModel):
     authorizationBalance: Optional[str] = None # account_by_phone not have this field
     authorizationLmtBalance: Optional[str] = None # account_by_phone not have this field
     isPostpaidQr: Optional[str]
+    
+class ServiceTokenResponseModal(BaseResponseModal):
+    """
+    Model for service token response.
+    """
+    token: str
+    type: str
