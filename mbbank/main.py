@@ -76,7 +76,7 @@ class MBBank:
         microsecond = int(now.strftime("%f")[:2])
         return now.strftime(f"%Y%m%d%H%M{microsecond}")
 
-    def _req(self, url, *, json=None, headers=None):
+    def _req(self, url, *, json=None, headers=None, encrypt: bool = False):
         if headers is None:
             headers = {}
         if json is None:
@@ -95,6 +95,10 @@ class MBBank:
             headers["X-Request-Id"] = rid
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
+            if encrypt:
+                wasm_bytes = self._get_wasm_file()
+                data_encrypt = wasm_encrypt(wasm_bytes, json_data)
+                json_data = {"dataEnc": data_encrypt}
             with requests.post(url, headers=headers, json=json_data,
                                proxies=self.proxy) as r:
                 data_out = r.json()

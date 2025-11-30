@@ -155,7 +155,7 @@ class MBBankAsync(MBBank):
                 raise e
         raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
 
-    async def _req(self, url, *, json=None, headers=None):
+    async def _req(self, url, *, json=None, headers=None, encrypt: bool = False) -> typing.Dict[str, typing.Any]:
         if headers is None:
             headers = {}
         if json is None:
@@ -174,6 +174,11 @@ class MBBankAsync(MBBank):
             headers["X-Request-Id"] = rid
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
+            if encrypt:
+                wasm_bytes = await self._get_wasm_file()
+                loop = asyncio.get_running_loop()
+                data_encrypt = await loop.run_in_executor(pool, wasm_encrypt, wasm_bytes, json_data)
+                json_data = {"dataEnc": data_encrypt}
             async with self._create_session() as s:
                 async with s.post(url, headers=headers, json=json_data,
                                   proxy=self.proxy, timeout=self.timeout) as r:
