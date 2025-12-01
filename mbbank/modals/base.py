@@ -3,13 +3,20 @@ from pydantic import BaseModel
 
 __all__ = ["BaseResponseModal", "Account", "ServiceTokenResponseModal"]
 
+
 class BaseResponseModal(BaseModel):
+    """
+    Model for base response from MBBank API.
+    """
+
     refNo: str
+
 
 class Account(BaseModel):
     """
     Model for individual account details.
     """
+
     hostCustId: Optional[str]
     acctNo: str
     acctAlias: Optional[str]
@@ -26,13 +33,17 @@ class Account(BaseModel):
     isDefault: Optional[str]
     subCategory: Optional[str]
     t24AccountType: Optional[str]
-    authorizationBalance: Optional[str] = None # account_by_phone not have this field
-    authorizationLmtBalance: Optional[str] = None # account_by_phone not have this field
+    authorizationBalance: Optional[str] = None  # account_by_phone not have this field
+    authorizationLmtBalance: Optional[str] = (
+        None  # account_by_phone not have this field
+    )
     isPostpaidQr: Optional[str]
-    
+
+
 class ServiceTokenResponseModal(BaseResponseModal):
     """
     Model for service token response.
     """
+
     token: str
     type: str

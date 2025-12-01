@@ -3,6 +3,10 @@ from pydantic import BaseModel
 
 
 class ErrorInfo(BaseModel):
+    """
+    Error Info Modal
+    """
+
     code: str
     message: str
     target: Optional[Any] = None
@@ -10,6 +14,10 @@ class ErrorInfo(BaseModel):
 
 
 class ATMCardIDResponseModal(BaseModel):
+    """
+    ATM Card External Service Response Modal
+    """
+
     responseID: str
     errorInfo: ErrorInfo
     cardID: Optional[str]

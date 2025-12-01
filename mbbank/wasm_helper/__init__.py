@@ -370,7 +370,18 @@ class GOJS:
         pass
 
 # All instances shared the same wasm module
-def wasm_encrypt(wasm_files, json_data):
+def wasm_encrypt(wasm_files: bytes, json_data: dict) -> str:
+    """
+    Encrypt json_data using the provided wasm_files.
+    
+    Args:
+        wasm_files (bytes): The WebAssembly module in bytes.
+        json_data (dict): The JSON data to be encrypted.
+        
+    Returns:
+        str: The encrypted JSON data as a string.
+        
+    """
     if getattr(global_this, 'bder', None) is not None:
         return global_this.bder(json.dumps(json_data), "0")
     engine = wasmtime.Engine()
@@ -381,3 +392,5 @@ def wasm_encrypt(wasm_files, json_data):
     run_as_lib = instance.exports(store)
     go_obj.run(run_as_lib)
     return global_this.bder(json.dumps(json_data), "0")
+
+__all__ = ['wasm_encrypt']

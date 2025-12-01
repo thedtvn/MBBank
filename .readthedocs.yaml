@@ -5,7 +5,6 @@
 # Required
 version: 2
 
-
 build:
   os: ubuntu-22.04
   tools:
@@ -17,17 +16,6 @@ build:
     - python3-setuptools
     - gcc
   commands:
-    - pip install pip-tools
-    - pip-compile docs/requirements.in
-    - pip install -r docs/requirements.txt
+    - pip install pdoc
     - pip install .
-    - python docs/gen_doc.py
-    - mkdocs build -d $READTHEDOCS_OUTPUT/html/
-
-mkdocs:
-  configuration: mkdocs.yml
-
-# Optionally declare the Python requirements required to build your docs
-python:
-   install:
-   - requirements: docs/requirements.txt
+    - python docs_gen.py --rtfd
