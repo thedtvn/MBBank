@@ -629,7 +629,6 @@ class MBBankAsync(MBBank):
                 break
         if bank_info is None:
             raise BankNotFoundError("ATM Card Bank not found in bank list")
-        print(bank_info)
         json_data = {
             "creditAccount": card_id.cardID,
             "bankCode": bank_info.smlCode,
