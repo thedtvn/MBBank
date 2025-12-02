@@ -10,8 +10,11 @@ An unofficial, lightweight Python API for the "Military Commercial Joint Stock B
 -   **Login**: Authenticate with your MBBank credentials.
 -   **Balance**: Check account balances.
 -   **Transaction History**: Retrieve transaction history for your accounts.
--   **Transfer**: Perform money transfers by account number ( Required MBBank APP on your phone to scan dotp code ).
+-   **Transfer**: Perform money transfers to another account*.
 -   **Async Support**: Includes asynchronous capabilities for better performance.
+
+> [!NOTE]
+> Transfer feature requires MBBank APP on your phone to scan OTP code and confirm the transfer.
 
 ## Installation
 
