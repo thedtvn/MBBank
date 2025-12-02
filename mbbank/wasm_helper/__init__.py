@@ -8,17 +8,19 @@ import wasmtime
 from .helper import Memory, fs_object, process_object, dict_warper, hash_list
 from contextvars import ContextVar
 
-undefined = ContextVar('undefined')
+undefined = ContextVar("undefined")
 
 
 class globalThis:
     def __init__(self):
         self.exports = undefined
-        self.window = dict_warper({
-            "document": {
-                "we_love_mb": True # From CookieGMVN Library :)
+        self.window = dict_warper(
+            {
+                "document": {
+                    "we_love_mb": True  # From CookieGMVN Library :)
+                }
             }
-        })
+        )
         self.fs = fs_object()
         self.process = process_object()
         self.location = dict_warper({"origin": "https://online.mbbank.com.vn"})
@@ -93,9 +95,16 @@ class GO:
                 else:
                     obj_id = len(self._values)
                 if obj_id >= len(self._values):
-                    self._values.extend([undefined for _ in range(obj_id - len(self._values) + 1)])
+                    self._values.extend(
+                        [undefined for _ in range(obj_id - len(self._values) + 1)]
+                    )
                 if obj_id >= len(self._goRefCounts):
-                    self._goRefCounts.extend([float("inf") for _ in range(obj_id - len(self._goRefCounts) + 1)])
+                    self._goRefCounts.extend(
+                        [
+                            float("inf")
+                            for _ in range(obj_id - len(self._goRefCounts) + 1)
+                        ]
+                    )
                 self._values[obj_id] = v
                 self._goRefCounts[obj_id] = 0
                 self._ids.setdefault(v, obj_id)
@@ -141,21 +150,16 @@ class GO:
         print("exit code:", exitCode)
 
     def importObject(self, imports_type: list[wasmtime.ImportType]):
-        return [wasmtime.Func(self.wasm_store, i.type, getattr(self.go_js, i.name)) for i in imports_type]
+        return [
+            wasmtime.Func(self.wasm_store, i.type, getattr(self.go_js, i.name))
+            for i in imports_type
+        ]
 
     # noinspection PyAttributeOutsideInit
     def run(self, inst):
         self._inst = inst
         self.mem = Memory(self.wasm_store, inst["mem"])
-        self._values = [
-            float("nan"),
-            0,
-            None,
-            True,
-            False,
-            global_this,
-            self
-        ]
+        self._values = [float("nan"), 0, None, True, False, global_this, self]
         self._goRefCounts = [float("inf") for _ in range(50)]
         self._ids = dict(
             [
@@ -194,7 +198,9 @@ class GO:
             self.offset += 8
         wasmMinDataAddr = 4096 + 8192
         if self.offset >= wasmMinDataAddr:
-            raise MemoryError("total length of command line and environment variables exceeds limit")
+            raise MemoryError(
+                "total length of command line and environment variables exceeds limit"
+            )
         self.go_js.run_init()
         self._inst["run"](self.wasm_store, argc, argv)
         if self.exited:
@@ -300,7 +306,11 @@ class GOJS:
 
     def sysjs_valueSet(self, sp):
         sp = (sp >> 0) & 0xFFFFFFFF
-        setattr(self.go.loadValue(sp + 8), self.go.loadString(sp + 16), self.go.loadValue(sp + 32))
+        setattr(
+            self.go.loadValue(sp + 8),
+            self.go.loadString(sp + 16),
+            self.go.loadValue(sp + 32),
+        )
 
     def sysjs_valueDelete(self, sp):
         sp = (sp >> 0) & 0xFFFFFFFF
@@ -347,7 +357,7 @@ class GOJS:
         data = self.go.loadValue(sp + 8)
         if type(data) is float:
             data = int(data)
-        str_data = str(data).encode('utf-8')
+        str_data = str(data).encode("utf-8")
         self.go.storeValue(sp + 16, str_data)
         self.go.setInt64(sp + 24, len(str_data))
 
@@ -369,28 +379,32 @@ class GOJS:
     def debug(self, *args):
         pass
 
+
 # All instances shared the same wasm module
 def wasm_encrypt(wasm_files: bytes, json_data: dict) -> str:
     """
     Encrypt json_data using the provided wasm_files.
-    
+
     Args:
         wasm_files (bytes): The WebAssembly module in bytes.
         json_data (dict): The JSON data to be encrypted.
-        
+
     Returns:
         str: The encrypted JSON data as a string.
-        
+
     """
-    if getattr(global_this, 'bder', None) is not None:
+    if getattr(global_this, "bder", None) is not None:
         return global_this.bder(json.dumps(json_data), "0")
     engine = wasmtime.Engine()
     modun = wasmtime.Module(engine, wasm_files)
     store = wasmtime.Store(engine)
     go_obj = GO(store)
-    instance = wasmtime.Instance(store, modun, imports=go_obj.importObject(modun.imports))
+    instance = wasmtime.Instance(
+        store, modun, imports=go_obj.importObject(modun.imports)
+    )
     run_as_lib = instance.exports(store)
     go_obj.run(run_as_lib)
     return global_this.bder(json.dumps(json_data), "0")
 
-__all__ = ['wasm_encrypt']
+
+__all__ = ["wasm_encrypt"]

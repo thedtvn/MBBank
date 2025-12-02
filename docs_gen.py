@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import shutil
 
+
 def copy_preload(path_out: Path) -> None:
     template_dir = Path("docs/templates/preload")
     path_out.mkdir(parents=True, exist_ok=True)
@@ -15,6 +16,7 @@ def copy_preload(path_out: Path) -> None:
             shutil.copy2(item, dest_path)
     print(f"Preloaded templates into {path_out}")
 
+
 def generate_docs(is_read_the_docs: bool = False) -> None:
     modules = ["mbbank"]
     output_dir = Path(
@@ -24,11 +26,12 @@ def generate_docs(is_read_the_docs: bool = False) -> None:
         docformat="google",
         show_source=True,
         include_undocumented=False,
-        template_directory="docs/templates"
+        template_directory="docs/templates",
     )
     pdoc.pdoc(*modules, output_directory=output_dir)
     copy_preload(output_dir)
     print(f"Documentation generated in {output_dir.absolute()}")
+
 
 if __name__ == "__main__":
     is_read_the_docs = "--rtfd" in sys.argv

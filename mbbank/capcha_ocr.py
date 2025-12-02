@@ -57,5 +57,3 @@ class CapchaOCR(CapchaProcessing):
         image = Image.open(io.BytesIO(img))
         text = self.model.predict(image)
         return text
-
-

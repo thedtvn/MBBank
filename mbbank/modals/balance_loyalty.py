@@ -7,6 +7,7 @@ class BalanceDTO(BaseModel):
     """
     DTO for balance details in loyalty account
     """
+
     totalHoldingBalance: str
     totalRedeemableBalance: str
     totalBalance: str
@@ -17,6 +18,7 @@ class BalanceLoyalty(BaseModel):
     """
     Model for loyalty balance information
     """
+
     cif: str
     fullName: str
     loyaltyAccountStatus: str
@@ -28,4 +30,5 @@ class BalanceLoyaltyResponseModal(BaseResponseModal):
     """
     Response model for loyalty balance API
     """
+
     bodyBalanceLoyalty: BalanceLoyalty

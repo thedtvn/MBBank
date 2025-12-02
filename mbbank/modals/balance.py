@@ -6,6 +6,7 @@ class BalanceResponseModal(BaseResponseModal):
     """
     Model for the balance response containing lists of accounts and total balances.
     """
+
     acct_list: List[Account]
     internationalAcctList: List[Account]
     totalBalanceEquivalent: str

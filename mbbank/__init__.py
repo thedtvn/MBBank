@@ -144,8 +144,8 @@ print("Card list: ", mb.getCardList())
 
 """
 
-from .main import MBBank
-from .asyncio import MBBankAsync
+from .main import MBBank, TransferContext
+from .asyncio import MBBankAsync, TransferContextAsync
 from .capcha_ocr import CapchaProcessing, CapchaOCR
 
 __version__ = "0.2.8"

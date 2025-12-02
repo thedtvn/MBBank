@@ -2,10 +2,12 @@ from .base import BaseResponseModal
 from typing import List, Optional
 from pydantic import BaseModel
 
+
 class ProductProperty(BaseModel):
     """
     Product property model.
     """
+
     originalDeposit: str
     intervalProfitFund: str
     interestRateType: str
@@ -13,18 +15,22 @@ class ProductProperty(BaseModel):
     cusType: str
     channel: str
 
+
 class SavingLimits(BaseModel):
     """
     Saving limits model.
     """
+
     openMinAmount: int
     withdrawMinAmount: int
     depositMinAmount: int
+
 
 class SavingInfo(BaseModel):
     """
     Saving info model.
     """
+
     customerId: str
     productCode: str
     savingAccountNumber: str
@@ -73,24 +79,30 @@ class SavingInfo(BaseModel):
     principalAmount: int
     blockAmt: int
 
+
 class SavingSection(BaseModel):
     """
     Saving section model.
     """
+
     total: int
     totalExpectInterestFund: int
     data: List[SavingInfo]
+
 
 class SavingData(BaseModel):
     """
     Saving data model.
     """
+
     onlineFixedSaving: SavingSection
     branchSaving: SavingSection
+
 
 class SavingListResponseModal(BaseResponseModal):
     """
     List of savings response model.
     """
+
     data: SavingData
     isError: bool

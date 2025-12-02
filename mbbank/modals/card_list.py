@@ -2,10 +2,12 @@ from .base import BaseResponseModal
 from typing import List, Optional
 from pydantic import BaseModel
 
+
 class Card(BaseModel):
     """
     Model representing a single card with its details.
     """
+
     id: Optional[int]
     acctNm: Optional[str]
     acctNo: Optional[str]
@@ -37,6 +39,7 @@ class CardListResponseModal(BaseResponseModal):
     """
     Model for the card list response containing lists of cards.
     """
+
     cardList: List[Card]
     cardClosed: List[Card]
     cardOther: List[Card]
