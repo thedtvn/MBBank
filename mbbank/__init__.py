@@ -149,4 +149,4 @@ from .main import MBBank, TransferContext
 from .asyncio import MBBankAsync, TransferContextAsync
 from .capcha_ocr import CapchaProcessing, CapchaOCR
 
-__version__ = "0.2.8"
+__version__ = "0.2.9"
