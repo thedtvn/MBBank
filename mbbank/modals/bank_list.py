@@ -7,6 +7,7 @@ class Bank(BaseModel):
     """
     Model representing a bank's information.
     """
+
     bankId: str
     bankName: str
     bankCode: str
@@ -26,4 +27,5 @@ class BankListResponseModal(BaseResponseModal):
     """
     Response model for a list of banks.
     """
+
     listBank: List[Bank]

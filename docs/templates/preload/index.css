@@ -1,0 +1,50 @@
+/* index.css — styles for preload/index.html */
+:root{
+  --bg: #0f1724;
+  --card: #0b1220;
+  --text: #e6eef8;
+  --muted: #9fb0c8;
+  --accent: #4fb3ff;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(180deg,#071023 0%, #071a2a 100%);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.container{
+  max-width:900px;
+  margin:48px auto;
+  padding:28px;
+  background:rgba(10,18,28,0.6);
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(2,6,23,0.6);
+}
+
+.hero h1{margin:0 0 8px;font-size:28px}
+.lead{color:var(--muted);margin:0 0 18px}
+
+h2{color:var(--accent);margin-top:26px}
+section p{line-height:1.6;color:var(--text);margin:8px 0}
+ul{margin:8px 0 16px 20px;color:var(--text)}
+dl{margin:8px 0}
+dt{font-weight:600;margin-top:12px;color:var(--accent)}
+dd{margin:6px 0 12px 0;color:var(--muted)}
+
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+footer.footnote{margin-top:20px;border-top:1px dashed rgba(255,255,255,0.04);padding-top:12px;color:var(--muted);font-size:13px}
+
+/* small screens */
+@media (max-width:520px){
+  .container{margin:18px;padding:18px}
+  .hero h1{font-size:20px}
+}
+

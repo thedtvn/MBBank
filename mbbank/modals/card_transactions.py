@@ -5,6 +5,7 @@ from typing import Optional, List
 
 class CardTransaction(BaseModel):
     """Model representing a single card transaction."""
+
     postingDate: str
     transactionDate: str
     accountNo: str
@@ -25,4 +26,5 @@ class CardTransaction(BaseModel):
 
 class CardTransactionsResponseModal(BaseResponseModal):
     """Response model for a list of card transactions."""
+
     transactionHistoryList: List[CardTransaction]

@@ -7,6 +7,7 @@ class BeneficiaryPayment(BaseModel):
     """
     Model representing a beneficiary for payments.
     """
+
     name: Optional[str] = None
     value1: Optional[str] = None
     value2: Optional[str] = None
@@ -22,10 +23,12 @@ class BeneficiaryPayment(BaseModel):
     providerNameEn: Optional[str] = None
     paymentDateLatest: Optional[str] = None
 
+
 class BeneficiaryTransfer(BaseModel):
     """
     Model representing a beneficiary for transfers.
     """
+
     id: Optional[str] = None
     accountNo: Optional[str] = None
     name: Optional[str] = None
@@ -56,10 +59,21 @@ class BeneficiaryTransfer(BaseModel):
     spiUserCode: Optional[str] = None
     cardId: Optional[str] = None
 
+
 class BeneficiaryListResponseModal(BaseResponseModal):
     """
     Model representing the response for a list of beneficiaries.
     if transactionType is "TRANSFER", the list contains BeneficiaryTransfer objects.
     if transactionType is "PAYMENT", the list contains BeneficiaryPayment objects.
     """
+
     favorBeneficiaryList: List[Union[BeneficiaryTransfer, BeneficiaryPayment]]
+
+
+class SavedBeneficiaryListResponseModal(BaseResponseModal):
+    """
+    Model representing the response for a list of saved beneficiaries.
+    """
+
+    baseFtList: List[BeneficiaryTransfer]
+    billPayeeList: Optional[List[BeneficiaryPayment]] = None

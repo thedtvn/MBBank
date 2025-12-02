@@ -2,10 +2,12 @@ from .base import BaseResponseModal
 from typing import List
 from pydantic import BaseModel
 
+
 class Transaction(BaseModel):
     """
     Transaction info model.
     """
+
     postingDate: str
     transactionDate: str
     accountNo: str
@@ -31,4 +33,5 @@ class TransactionHistoryResponseModal(BaseResponseModal):
     """
     List of transaction history response model.
     """
+
     transactionHistoryList: List[Transaction]

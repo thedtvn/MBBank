@@ -193,10 +193,7 @@ class SectorDetailModel(BaseModel):
     Priority_Sector: Optional[str] = Field(None, alias="Priority Sector")
     Private_sector: Optional[str] = Field(None, alias="Private sector")
 
-    model_config = {
-        "populate_by_name": True,
-        "extra": "ignore"
-    }
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class CustModel(BaseModel):
