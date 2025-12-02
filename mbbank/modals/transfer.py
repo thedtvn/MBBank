@@ -10,8 +10,8 @@ class AddInfo(BaseModel):
     authenTypeFinal: str
 
 
-class VerifyTransferResponseModal(BaseResponseModal):
-    """Model for verifying transfer response."""
+class TransferResponseModal(BaseResponseModal):
+    """Model for transfer response."""
 
     srcAccountNumber: str
     srcAccountCurrency: str

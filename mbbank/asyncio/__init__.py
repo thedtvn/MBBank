@@ -32,9 +32,7 @@ from mbbank.modals import (
     ATMCardIDResponseModal,
     ATMAccountNameResponseModal,
     Bank,
-)
-from mbbank.modals.transfer import (
-    VerifyTransferResponseModal,
+    TransferResponseModal,
     AuthTransferResponseModal,
     TransactionAuthenResponseModal,
     AuthListItem,
@@ -692,10 +690,6 @@ class MBBankAsync(MBBank):
 
 
 class TransferContextAsync(TransferContext):
-    """
-    Async Transfer context manager for account to account transfer
-    """
-
     def __init__(
         self,
         mbbank_instance: MBBankAsync,
@@ -706,18 +700,6 @@ class TransferContextAsync(TransferContext):
         amount: int,
         message: str,
     ):
-        """
-        Initialize async transfer context
-        Note: This for advance flow only, normal flow not need to call this class directly use makeTransferAccountToAccount instead.
-
-        Args:
-            mbbank_instance (MBBankAsync): MBBankAsync instance
-            src_account (str): Source account number
-            dest_account (str): Destination account number
-            bank_code (str): Bank code of the destination account get from getBankList eg "MB".
-            amount (int): Amount to transfer
-            message (str): Transfer message
-        """
         super().__init__(
             mbbank_instance,
             src_account=src_account,
@@ -744,13 +726,14 @@ class TransferContextAsync(TransferContext):
                 return bank
         raise BankNotFoundError("Bank code not found in bank list")
 
-    async def verify_transfer(self) -> VerifyTransferResponseModal:
+    async def verify_transfer(self) -> TransferResponseModal:
         """
         Verify transfer info before making transfer
+
         Note: This for advance flow only, normal flow not need to call this method directly use get_qr_code instead
 
         Returns:
-            success (VerifyTransferResponseModal): verify transfer response
+            success (TransferResponseModal): verify transfer response
 
         Raises:
             MBBankError: if start() not called before verify_transfer() to prepare bank and account name
@@ -776,7 +759,7 @@ class TransferContextAsync(TransferContext):
             json=json_data,
             encrypt=True,
         )
-        return VerifyTransferResponseModal.model_validate(data_out, strict=True)
+        return TransferResponseModal.model_validate(data_out, strict=True)
 
     async def get_auth_list(self) -> AuthTransferResponseModal:
         """
@@ -806,6 +789,7 @@ class TransferContextAsync(TransferContext):
     async def create_transaction_authen(self) -> TransactionAuthenResponseModal:
         """
         Create transaction authentication payload
+
         Note: This for advance flow only, normal flow not need to call this method directly use get_qr_code instead
 
         Returns:
@@ -816,11 +800,11 @@ class TransferContextAsync(TransferContext):
         """
         self.refNo = f"{self.mbbank._userid}-{self.mbbank._get_now_time()}"
         userinfo = await self.mbbank.userinfo()
-        self.custId = userinfo.cust.id
+        custId = userinfo.cust.id
         json_data = {
             "transactionAuthen": {
                 "refNo": self.refNo,
-                "custId": self.custId,
+                "custId": custId,
                 "sourceAccount": self.src_account,
                 "destAccount": self.dest_account,
                 "amount": self.amount,
@@ -835,13 +819,18 @@ class TransferContextAsync(TransferContext):
         )
         return TransactionAuthenResponseModal.model_validate(data_out, strict=True)
 
-    async def transfer(self, otp: str, auth_type: AuthListItem):
+    async def transfer(
+        self, otp: str, auth_type: AuthListItem
+    ) -> TransferResponseModal:
         """
         Execute transfer with provided OTP
 
         Args:
             otp (str): OTP code from authentication method
             auth_type (AuthListItem): authentication method get from get_auth_list()
+
+        Returns:
+            success (TransferResponseModal): transfer response
 
         Raises:
             MBBankError: if get_qr_code() not called before transfer()
@@ -868,7 +857,7 @@ class TransferContextAsync(TransferContext):
             json=json_data,
             encrypt=True,
         )
-        return data_out
+        return TransferResponseModal.model_validate(data_out, strict=True)
 
     async def get_qr_code(self) -> str:
         """
@@ -890,6 +879,7 @@ class TransferContextAsync(TransferContext):
         """
         Start transfer process
         This will verify transfer info and prepare for authentication
+
         Note: This for advance flow only, normal flow not need to call this method directly use makeTransferAccountToAccount instead.
 
         Returns:

@@ -142,6 +142,7 @@ mb = MBBank(
 print("Card list: ", mb.getCardList())
 ```
 
+More examples can be found on the [GitHub repository](https://github.com/thedtvn/MBBank/tree/main/examples).
 """
 
 from .main import MBBank, TransferContext

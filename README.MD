@@ -1,39 +1,92 @@
 # MBBank API for Python
-A unofficially lightweight Python Api for the "Military Commercial Joint Stock Bank" personal account
 
-## Why we  have this lib ?
+An unofficial, lightweight Python API for the "Military Commercial Joint Stock Bank" (MBBank) personal accounts.
 
-Because I don't want to lose money on some api services like [casso.vn](https://casso.vn/) or [payos.vn](https://payos.vn/)
-when have freemium tier but with limit :>
+> [!WARNING]
+> This library is unofficial and not endorsed by MBBank. Use it at your own risk.
 
-What you need that it use this lib to make your own code so you can use it free forever
+## Features
 
-[Documentation & FAQ](http://mbbank.rtfd.io/)
+-   **Login**: Authenticate with your MBBank credentials.
+-   **Balance**: Check account balances.
+-   **Transaction History**: Retrieve transaction history for your accounts.
+-   **Transfer**: Perform money transfers by account number ( Required MBBank APP on your phone to scan dotp code ).
+-   **Async Support**: Includes asynchronous capabilities for better performance.
 
-## Requires
-   - [onnx with cuda](https://onnxruntime.ai/getting-started) (optional if you want to use cuda gpu)
+## Installation
 
-   - python3
- 
-## Install
-    pip install mbbank-lib
-   or Dev Ver
-   
-    pip install git+https://github.com/thedtvn/MBBank
+### From PyPI
+
+```bash
+pip install mbbank-lib
+```
+
+### From Source (Development Version)
+
+```bash
+pip install git+https://github.com/thedtvn/MBBank
+```
+
+## Requirements
+
+-   Python 3.x
+-   [onnxruntime-gpu](https://onnxruntime.ai/getting-started) (Optional, for CUDA GPU support)
+
+## Quick Start
+
+Here is a simple example of how to log in and fetch your account balance:
+
+```python
+import mbbank
+
+def main():
+    username = "YOUR_USERNAME"
+    password = "YOUR_PASSWORD"
+
+    try:
+        mb = mbbank.MBBank(username=username, password=password)
+        
+        # Get balance information
+        balance_info = mb.getBalance()
+        
+        if balance_info.acct_list:
+            print(f"Login successful! Found {len(balance_info.acct_list)} account(s).")
+            for acct in balance_info.acct_list:
+                print(f"Account: {acct.acctNo} - Balance: {acct.currentBalance} {acct.currency}")
+        else:
+            print("Login successful, but no accounts found.")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
+```
+
+For more examples, check the [examples directory](https://github.com/thedtvn/MBBank/tree/main/examples) or [docs](http://mbbank.rtfd.io/)
+
+## Documentation
+
+For detailed documentation and FAQ, visit: [http://mbbank.rtfd.io/](http://mbbank.rtfd.io/)
+
+## Related Projects
+
+-   [Payment QR Code Generator (vietqr.io)](https://vietqr.io/)
+-   [MBBank JS API](https://github.com/CookieGMVN/MBBank)
+-   [MBBank OCR](https://github.com/thedtvn/mbbank-capcha-ocr)
 
 ## Donate
-If you like this project and want to support it, you can do so by donating via the following methods:
-- **Momo**: 0961291206
-- **ZaloPay**: 0961291206
-- **Banking**:
-  - Techcombank - NGUYEN DUONG TUAN
-  - Account Nickname: THEDTVN
-  - Account Nuber: 9612912060
 
-## Extra Info
-- Payment QR Code Generator
-  - [vietqr.io](https://vietqr.io/)
+If you find this project helpful, you can support the developer:
 
-- [MBBank JS API](https://github.com/CookieGMVN/MBBank)
+-   **Momo**: 0961291206
+-   **ZaloPay**: 0961291206
+-   **Banking**:
+    -   Bank: Techcombank
+    -   Account Name: NGUYEN DUONG TUAN
+    -   Account Number: 9612912060
+    -   Nickname: THEDTVN
 
-- [MBBank OCR](https://github.com/thedtvn/mbbank-capcha-ocr)
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.txt) file for details.
