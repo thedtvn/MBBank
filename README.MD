@@ -77,6 +77,7 @@ For detailed documentation and FAQ, visit: [http://mbbank.rtfd.io/](http://mbban
 -   [Payment QR Code Generator (vietqr.io)](https://vietqr.io/)
 -   [MBBank JS API](https://github.com/CookieGMVN/MBBank)
 -   [MBBank OCR](https://github.com/thedtvn/mbbank-capcha-ocr)
+-   [MBBank Captcha Dataset](https://www.kaggle.com/datasets/cookiegmvn/mbbank-captcha-images)
 
 ## Donate
 
