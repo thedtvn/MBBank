@@ -180,3 +180,6 @@ docs/**/*.html
 docs/**/*.js
 docs/**/*.css
 !docs/templates/**/*
+
+# Testing
+tests/

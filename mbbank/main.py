@@ -48,7 +48,6 @@ headers_default = {
     "Sec-Fetch-Site": "same-origin",
 }
 
-
 class MBBank:
     """Core class
 
