@@ -11,7 +11,13 @@ from mbbank.capcha_ocr import CapchaProcessing
 from mbbank.main import MBBank, TransferContext
 from mbbank.wasm_helper import wasm_encrypt
 from mbbank.main import headers_default
-from mbbank.errors import CapchaError, MBBankAPIError, BankNotFoundError, MBBankError
+from mbbank.errors import (
+    CapchaError,
+    MBBankAPIError,
+    BankNotFoundError,
+    MBBankError,
+    CryptoVerifyError,
+)
 from mbbank.modals import (
     BalanceResponseModal,
     BalanceLoyaltyResponseModal,
@@ -139,6 +145,8 @@ class MBBankAsync(MBBank):
                 json=json_data,
                 proxy=self.proxy,
             ) as r:
+                if r.status == 428:
+                    raise CryptoVerifyError(await r.text(), r.content_type)
                 data_out = await r.json()
                 return base64.b64decode(data_out["imageString"])
 
@@ -173,6 +181,8 @@ class MBBankAsync(MBBank):
                 json={"dataEnc": data_encrypt},
                 proxy=self.proxy,
             ) as r:
+                if r.status == 428:
+                    raise CryptoVerifyError(await r.text(), r.content_type)
                 data_out = await r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
@@ -243,6 +253,8 @@ class MBBankAsync(MBBank):
                     proxy=self.proxy,
                     timeout=self.timeout,
                 ) as r:
+                    if r.status == 428:
+                        raise CryptoVerifyError(await r.text(), r.content_type)
                     data_out = await r.json()
             if data_out["result"] is None:
                 await self.getBalance()

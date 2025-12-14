@@ -30,7 +30,13 @@ from .modals import (
     TransactionAuthenResponseModal,
     AuthListItem,
 )
-from .errors import CapchaError, MBBankAPIError, BankNotFoundError, MBBankError
+from .errors import (
+    CapchaError,
+    MBBankAPIError,
+    BankNotFoundError,
+    MBBankError,
+    CryptoVerifyError,
+)
 
 headers_default = {
     "Cache-Control": "max-age=0",
@@ -47,6 +53,7 @@ headers_default = {
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
 }
+
 
 class MBBank:
     """Core class
@@ -127,6 +134,8 @@ class MBBank:
             with requests.post(
                 url, headers=headers, json=json_data, proxies=self.proxy
             ) as r:
+                if r.status_code == 428:
+                    raise CryptoVerifyError(r.text, r.headers.get("Content-Type", ""))
                 data_out = r.json()
             if data_out["result"] is None:
                 self.getBalance()
@@ -174,6 +183,8 @@ class MBBank:
             proxies=self.proxy,
             timeout=self.timeout,
         ) as r:
+            if r.status_code == 428:
+                raise CryptoVerifyError(r.text, r.headers.get("Content-Type", ""))
             data_out = r.json()
             return base64.b64decode(data_out["imageString"])
 
@@ -205,6 +216,8 @@ class MBBank:
             proxies=self.proxy,
             timeout=self.timeout,
         ) as r:
+            if r.status_code == 428:
+                raise CryptoVerifyError(r.text, r.headers.get("Content-Type", ""))
             data_out = r.json()
         if data_out["result"]["ok"]:
             self.sessionId = data_out["sessionId"]
@@ -242,7 +255,7 @@ class MBBank:
             except MBBankAPIError as e:
                 if e.code == "GW283":
                     continue  # capcha error, try again
-                raise e
+                raise e  # other error raise up
         raise CapchaError(
             f"Exceeded maximum retry times for capcha processing ({self.retry_times})"
         )
