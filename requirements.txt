@@ -1,8 +1,0 @@
-Pillow
-requests
-aiohttp
-setuptools
-wheel
-wasmtime
-mb-capcha-ocr
-pydantic

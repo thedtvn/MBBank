@@ -2,7 +2,6 @@ import mbbank
 
 # requires 'qrcode[pil]' package for QR code generation
 import qrcode
-import getpass
 
 username = input("Enter your username: ")
 password = input("Enter your password: ")

@@ -1,6 +1,6 @@
 # MBBank API for Python
 
-An unofficial, lightweight Python API for the "Military Commercial Joint Stock Bank" (MBBank) personal accounts.
+An unofficial, lightweight Python API wrapper for the "Military Commercial Joint Stock Bank" (MBBank) personal accounts.
 
 > [!WARNING]
 > This library is unofficial and not endorsed by MBBank. Use it at your own risk.
@@ -93,4 +93,4 @@ If you find this project helpful, you can support the developer:
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE.txt) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

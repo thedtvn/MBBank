@@ -5,7 +5,7 @@ import os
 import time
 import traceback
 import wasmtime
-from .helper import Memory, fs_object, process_object, dict_warper, hash_list
+from .helper import Memory, fs_object, process_object, dict_warper
 from contextvars import ContextVar
 
 undefined = ContextVar("undefined")

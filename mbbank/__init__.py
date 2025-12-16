@@ -149,4 +149,13 @@ from .main import MBBank, TransferContext
 from .asyncio import MBBankAsync, TransferContextAsync
 from .capcha_ocr import CapchaProcessing, CapchaOCR
 
+__all__ = [
+    "MBBank",
+    "TransferContext",
+    "MBBankAsync",
+    "TransferContextAsync",
+    "CapchaProcessing",
+    "CapchaOCR",
+]
+
 __version__ = "0.2.9"
