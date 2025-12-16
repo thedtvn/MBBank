@@ -1,4 +1,4 @@
-# Use for error that dose not have message and need custom message
+# Use for error that does not have message and need custom message
 
 custom_messages = {"MC3011": "Card not found."}
 

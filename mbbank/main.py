@@ -1,42 +1,45 @@
-import datetime
 import base64
+import datetime
 import hashlib
 import typing
+
 import requests
+
 from .capcha_ocr import CapchaOCR, CapchaProcessing
-from .wasm_helper import wasm_encrypt
+from .errors import (
+    BankNotFoundError,
+    CapchaError,
+    CryptoVerifyError,
+    MBBankAPIError,
+    MBBankError,
+)
 from .modals import (
-    BalanceResponseModal,
+    AccountByPhoneResponseModal,
+    AccountNameResponseModal,
+    ATMAccountNameResponseModal,
+    ATMCardIDResponseModal,
+    AuthListItem,
+    AuthTransferResponseModal,
     BalanceLoyaltyResponseModal,
+    BalanceResponseModal,
+    Bank,
     BankListResponseModal,
     BeneficiaryListResponseModal,
     CardListResponseModal,
-    AccountByPhoneResponseModal,
-    UserInfoResponseModal,
-    LoanListResponseModal,
-    SavingListResponseModal,
-    InterestRateResponseModal,
-    TransactionHistoryResponseModal,
     CardTransactionsResponseModal,
-    SavingDetailResponseModal,
+    InterestRateResponseModal,
+    LoanListResponseModal,
     SavedBeneficiaryListResponseModal,
-    AccountNameResponseModal,
+    SavingDetailResponseModal,
+    SavingListResponseModal,
     ServiceTokenResponseModal,
-    ATMCardIDResponseModal,
-    ATMAccountNameResponseModal,
-    Bank,
-    TransferResponseModal,
-    AuthTransferResponseModal,
+    TransactionAuthen,
     TransactionAuthenResponseModal,
-    AuthListItem,
+    TransactionHistoryResponseModal,
+    TransferResponseModal,
+    UserInfoResponseModal,
 )
-from .errors import (
-    CapchaError,
-    MBBankAPIError,
-    BankNotFoundError,
-    MBBankError,
-    CryptoVerifyError,
-)
+from .wasm_helper import wasm_encrypt
 
 headers_default = {
     "Cache-Control": "max-age=0",
@@ -419,7 +422,7 @@ class MBBank:
             accType (Literal["OSA", "SBA"]): saving account type | OSA: Online Saving Account, SBA: Saving Bank Account
 
         Returns:
-            success (c): saving detail
+            success (SavingDetailResponseModal): saving detail
 
         Raises:
             MBBankAPIError: if api response not ok
@@ -458,7 +461,7 @@ class MBBank:
             to_date (datetime.datetime): to date
 
         Returns:
-            success (CardListResponseModal): card transaction history
+            success (CardTransactionsResponseModal): card transaction history
 
         Raises:
             MBBankAPIError: if api response not ok
@@ -691,7 +694,7 @@ class TransferContext:
     Attributes:
         to_account_name (AccountNameResponseModal or None): destination account name info, this available when call makeTransferAccountToAccount
         refNo (str or None): reference number
-        timestamp (str or None): timestamp
+        timestamp (int or None): timestamp
         transaction_authen (TransactionAuthenResponseModal or None): transaction authentication info
         mbbank (MBBank): MBBank instance
         src_account (str): source account number
@@ -700,6 +703,18 @@ class TransferContext:
         amount (int): amount to transfer
         message (str): transfer message
     """
+
+    to_account_name: typing.Optional[AccountNameResponseModal]
+    refNo: typing.Optional[str]
+    timestamp: typing.Optional[int]
+    transaction_authen: typing.Optional[TransactionAuthen]
+    mbbank: MBBank
+    src_account: str
+    dest_account: str
+    bank_code: str
+    amount: int
+    message: str
+    bank: typing.Optional[Bank]
 
     def __init__(
         self,
@@ -799,7 +814,7 @@ class TransferContext:
             BankNotFoundError: if bank code not found in bank list
         """
         if self.bank is None:
-            self.getBank()
+            self.bank = self.getBank()
         json_data = {
             "sourceAccount": self.src_account,
             "amount": self.amount,
@@ -824,6 +839,10 @@ class TransferContext:
         Raises:
             MBBankAPIError: if api response not ok
         """
+        if self.to_account_name is None or self.bank is None:
+            raise MBBankError(
+                "Call start() before create_transaction_authen() to prepare account name"
+            )
         self.refNo = f"{self.mbbank._userid}-{self.mbbank._get_now_time()}"
         custId = self.mbbank.userinfo().cust.id
         json_data = {
@@ -863,6 +882,10 @@ class TransferContext:
             raise MBBankError(
                 "Call get_qr_code() before transfer() to prepare authentication"
             )
+        elif self.bank is None or self.to_account_name is None:
+            raise MBBankError(
+                "Call start() before transfer() to prepare bank and account name"
+            )
         otp_crafted = self._craft_otp(otp, auth_type)
         json_data = {
             "srcAccountNumber": self.src_account,
@@ -898,6 +921,14 @@ class TransferContext:
         return f"TRANID|{self.transaction_authen.id}"
 
     def _craft_otp(self, otp: str, auth_type: AuthListItem) -> str:
+        if (
+            self.timestamp is None
+            or self.refNo is None
+            or self.transaction_authen is None
+        ):
+            raise MBBankError(
+                "Call get_qr_code() before _craft_otp() to prepare authentication"
+            )
         return f"ibr|{auth_type.code}||{otp}||{self.timestamp}|{self.transaction_authen.id}|{self.refNo}"
 
     def start(self) -> "TransferContext":

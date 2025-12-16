@@ -6,7 +6,7 @@ description = "A unofficially lightweight Python API wrapper for the \"Military 
 readme = { file = "README.MD", content-type = "text/markdown" }
 requires-python = ">=3.8"
 license-files = ["LICENSE"]
-authors = [ { name = "The DT", email = "duongtuan30306@gmail.com" } ]
+authors = [{ name = "The DT", email = "duongtuan30306@gmail.com" }]
 license = "MIT"
 
 dependencies = [
@@ -31,5 +31,7 @@ version = { attr = "mbbank.__version__" }
 
 [dependency-groups]
 dev = [
-    "ruff>=0.14.9" # for linting and formatting
+    "pdoc>=14.7.0", # for documentation generation
+    "ruff>=0.14.9", # for linting and formatting
+    "ty>=0.0.1a35" # for type checking
 ]

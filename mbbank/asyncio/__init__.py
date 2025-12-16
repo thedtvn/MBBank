@@ -1,48 +1,48 @@
 import asyncio
+import base64
 import concurrent.futures
 import datetime
-import base64
 import hashlib
 import ssl
 import typing
+
 import aiohttp
 
 from mbbank.capcha_ocr import CapchaProcessing
-from mbbank.main import MBBank, TransferContext
-from mbbank.wasm_helper import wasm_encrypt
-from mbbank.main import headers_default
 from mbbank.errors import (
-    CapchaError,
-    MBBankAPIError,
     BankNotFoundError,
-    MBBankError,
+    CapchaError,
     CryptoVerifyError,
+    MBBankAPIError,
+    MBBankError,
 )
+from mbbank.main import MBBank, TransferContext, headers_default
 from mbbank.modals import (
-    BalanceResponseModal,
+    AccountByPhoneResponseModal,
+    AccountNameResponseModal,
+    ATMAccountNameResponseModal,
+    ATMCardIDResponseModal,
+    AuthListItem,
+    AuthTransferResponseModal,
     BalanceLoyaltyResponseModal,
+    BalanceResponseModal,
+    Bank,
     BankListResponseModal,
     BeneficiaryListResponseModal,
     CardListResponseModal,
-    AccountByPhoneResponseModal,
-    UserInfoResponseModal,
-    LoanListResponseModal,
-    SavingListResponseModal,
-    InterestRateResponseModal,
-    TransactionHistoryResponseModal,
     CardTransactionsResponseModal,
-    SavingDetailResponseModal,
+    InterestRateResponseModal,
+    LoanListResponseModal,
     SavedBeneficiaryListResponseModal,
-    AccountNameResponseModal,
+    SavingDetailResponseModal,
+    SavingListResponseModal,
     ServiceTokenResponseModal,
-    ATMCardIDResponseModal,
-    ATMAccountNameResponseModal,
-    Bank,
-    TransferResponseModal,
-    AuthTransferResponseModal,
     TransactionAuthenResponseModal,
-    AuthListItem,
+    TransactionHistoryResponseModal,
+    TransferResponseModal,
+    UserInfoResponseModal,
 )
+from mbbank.wasm_helper import wasm_encrypt
 
 pool = (
     concurrent.futures.ThreadPoolExecutor()
@@ -201,6 +201,7 @@ class MBBankAsync(MBBank):
     async def _authenticate(self):
         try_count = 0
         while try_count < self.retry_times:
+            try_count += 1
             self._userinfo = None
             self.sessionId = None
             img_bytes = await self.get_capcha_image()
@@ -809,6 +810,10 @@ class TransferContextAsync(TransferContext):
         Raises:
             MBBankAPIError: if api response not ok
         """
+        if self.to_account_name is None or self.bank is None:
+            raise MBBankError(
+                "Call start() before create_transaction_authen() to prepare account name"
+            )
         self.refNo = f"{self.mbbank._userid}-{self.mbbank._get_now_time()}"
         userinfo = await self.mbbank.userinfo()
         custId = userinfo.cust.id
@@ -850,6 +855,10 @@ class TransferContextAsync(TransferContext):
         if self.transaction_authen is None or self.timestamp is None:
             raise MBBankError(
                 "Call get_qr_code() before transfer() to prepare authentication"
+            )
+        elif self.bank is None or self.to_account_name is None:
+            raise MBBankError(
+                "Call start() before transfer() to prepare bank and account name"
             )
         otp_crafted = self._craft_otp(otp, auth_type)
         json_data = {

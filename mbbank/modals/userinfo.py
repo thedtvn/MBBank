@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
+from .base import BaseResponseModal
 
 
 class UserInfoAccountModel(BaseModel):
@@ -287,10 +289,10 @@ class InterfaceTypeModel(BaseModel):
 class UserInfoResponseModal(BaseResponseModal):
     """Response model for user information, including customer, accounts, cards, and settings."""
 
-    sessionId: Optional[str]
-    cust: Optional[CustModel]
-    menuManager: Optional[List[MenuManagerModel]]
-    interfaceType: Optional[InterfaceTypeModel]
+    sessionId: str
+    cust: CustModel
+    menuManager: List[MenuManagerModel]
+    interfaceType: InterfaceTypeModel
     maskingPhone: Optional[Any]
     listPhoneId: Optional[Any]
     existPin: Optional[Any]

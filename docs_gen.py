@@ -1,8 +1,9 @@
-import pdoc
-import sys
 import os
-from pathlib import Path
 import shutil
+import sys
+from pathlib import Path
+
+import pdoc
 
 
 def copy_preload(path_out: Path) -> None:
@@ -20,13 +21,15 @@ def copy_preload(path_out: Path) -> None:
 def generate_docs(is_read_the_docs: bool = False) -> None:
     modules = ["mbbank"]
     output_dir = Path(
-        "docs" if not is_read_the_docs else os.getenv("READTHEDOCS_OUTPUT") + "/html/"
+        "docs"
+        if not is_read_the_docs
+        else os.getenv("READTHEDOCS_OUTPUT", ".") + "/html/"
     )
     pdoc.render.configure(
         docformat="google",
         show_source=True,
         include_undocumented=False,
-        template_directory="docs/templates",
+        template_directory=Path("docs/templates"),
     )
     pdoc.pdoc(*modules, output_directory=output_dir)
     copy_preload(output_dir)
@@ -34,5 +37,5 @@ def generate_docs(is_read_the_docs: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    is_read_the_docs = "--rtfd" in sys.argv
-    generate_docs(is_read_the_docs)
+    is_read_the_docs_arg = "--rtfd" in sys.argv
+    generate_docs(is_read_the_docs_arg)

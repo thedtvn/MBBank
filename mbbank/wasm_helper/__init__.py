@@ -1,12 +1,15 @@
+# type: ignore | ignore since this file originally comes from js translate to python and replicate js behavior
 import asyncio
 import json
 import math
 import os
 import time
 import traceback
-import wasmtime
-from .helper import Memory, fs_object, process_object, dict_warper
 from contextvars import ContextVar
+
+import wasmtime
+
+from .helper import Memory, dict_warper, fs_object, process_object
 
 undefined = ContextVar("undefined")
 
