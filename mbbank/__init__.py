@@ -145,9 +145,9 @@ print("Card list: ", mb.getCardList())
 More examples can be found on the [GitHub repository](https://github.com/thedtvn/MBBank/tree/main/examples).
 """
 
-from .main import MBBank, TransferContext
 from .asyncio import MBBankAsync, TransferContextAsync
-from .capcha_ocr import CapchaProcessing, CapchaOCR
+from .capcha_ocr import CapchaOCR, CapchaProcessing
+from .main import MBBank, TransferContext
 
 __all__ = [
     "MBBank",
@@ -158,4 +158,4 @@ __all__ = [
     "CapchaOCR",
 ]
 
-__version__ = "0.2.9"
+__version__ = "0.3.0"

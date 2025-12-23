@@ -17,21 +17,21 @@ dependencies = [
     "wheel",
     "wasmtime",
     "mb-capcha-ocr",
-    "pydantic",
+    "pydantic"
 ]
 
 [project.urls]
 Homepage = "https://github.com/thedtvn/MBBank"
 
 [tool.setuptools.packages.find]
-include = ["mbbank*"]
+include = ["mbbank", "mbbank.*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "mbbank.__version__" }
 
 [dependency-groups]
 dev = [
-    "pdoc>=14.7.0", # for documentation generation
-    "ruff>=0.14.9", # for linting and formatting
-    "ty>=0.0.1a35" # for type checking
+    "pdoc", # for documentation generation
+    "ruff", # for linting and formatting
+    "ty" # for type checking
 ]
