@@ -19,7 +19,14 @@ def copy_preload(path_out: Path) -> None:
 
 
 def generate_docs(is_read_the_docs: bool = False) -> None:
-    modules = ["mbbank"]
+    modules = [
+        "mbbank",
+        "mbbank.capcha_ocr",
+        "mbbank.main",
+        "mbbank.asyncio",
+        "mbbank.modals",
+        "mbbank.errors",
+    ]
     output_dir = Path(
         "docs"
         if not is_read_the_docs
