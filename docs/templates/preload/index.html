@@ -9,101 +9,109 @@
 </head>
 
 <body>
-    <main class="container">
-        <header class="hero">
-            <h1>Welcome to MBBank API for Python</h1>
-            <p class="lead">A small Python library to interact with MB Bank APIs (read-only functionality).</p>
-        </header>
+<main class="container">
+    <header class="hero">
+        <h1>Welcome to MBBank API for Python</h1>
+        <p class="lead">A small Python library to interact with MB Bank APIs (read-only functionality).</p>
+    </header>
 
-        <section>
-            <h2>Why we have this library?</h2>
-            <p>
-                Because I didn't want to lose money on some API services like
-                <a href="https://casso.vn/" target="_blank" rel="noopener">casso.vn</a>
-                or
-                <a href="https://payos.vn/" target="_blank" rel="noopener">payos.vn</a>
-                when they provide freemium tiers with limits.
-            </p>
-            <p>
-                This library lets you build your own code around the MB Bank API so you can use it freely without
-                depending on third-party paid gateways.
-            </p>
-        </section>
+    <section>
+        <h2>Why we have this library?</h2>
+        <p>
+            Because I didn't want to lose money on some API services like
+            <a href="https://casso.vn/" target="_blank" rel="noopener">casso.vn</a>
+            or
+            <a href="https://payos.vn/" target="_blank" rel="noopener">payos.vn</a>
+            when they provide freemium tiers with limits.
+        </p>
+        <p>
+            This library lets you build your own code around the MB Bank API so you can use it freely without
+            depending on third-party paid gateways.
+        </p>
+    </section>
 
-        <section>
-            <h2>Requires</h2>
-            <ul>
-                <li><a href="https://onnxruntime.ai/getting-started" target="_blank" rel="noopener">ONNX Runtime (with
-                        CUDA)</a> — optional if you want to use a CUDA GPU for OCR.</li>
-                <li>Python 3</li>
-            </ul>
-        </section>
+    <section>
+        <h2>Requires</h2>
+        <ul>
+            <li><a href="https://onnxruntime.ai/getting-started" target="_blank" rel="noopener">ONNX Runtime (with
+                CUDA)</a> — optional if you want to use a CUDA GPU for OCR.
+            </li>
+            <li>Python 3</li>
+        </ul>
+    </section>
 
-        <section>
-            <h2>Manuals</h2>
-            <ul>
-                <li>
-                    <a href="./mbbank.html">
-                        <strong>
-                            Main Entry Point
-                        </strong>
-                    </a>
-                </li>
-                <li>
+    <section>
+        <h2>Manuals</h2>
+        <ul>
+            <li>
+                <a href="./mbbank.html">
                     <strong>
-                        Async API
-                    </strong> – <a href="./mbbank/asyncio.html">mbbank.asyncio</a>
-                </li>
-                <li>
-                    <strong>
-                        Sync API
-                    </strong> – <a href="./mbbank/main.html">mbbank.main</a>
-                </li>
-                <li>
-                    <strong>
-                        Image Processing
-                    </strong> – <a href="./mbbank/capcha_ocr.html">mbbank.capcha_ocr</a>
-                </li>
-                <li>
-                    <strong>
-                        Response Models
-                    </strong> – <a href="./mbbank/modals.html">mbbank.modals</a>
-                </li>
-                <li>
-                    <strong>
-                        Errors
-                    </strong> – <a href="./mbbank/errors.html">mbbank.errors</a>
-                </li>
-            </ul>
-        </section>
+                        Main Entry Point
+                    </strong>
+                </a>
+            </li>
+            <li>
+                <strong>
+                    Async API
+                </strong> – <a href="./mbbank/asyncio.html">mbbank.asyncio</a>
+            </li>
+            <li>
+                <strong>
+                    Sync API
+                </strong> – <a href="./mbbank/main.html">mbbank.main</a>
+            </li>
+            <li>
+                <strong>
+                    Image Processing
+                </strong> – <a href="./mbbank/capcha_ocr.html">mbbank.capcha_ocr</a>
+            </li>
+            <li>
+                <strong>
+                    Response Models
+                </strong> – <a href="./mbbank/modals.html">mbbank.modals</a>
+            </li>
+            <li>
+                <strong>
+                    Errors
+                </strong> – <a href="./mbbank/errors.html">mbbank.errors</a>
+            </li>
+        </ul>
+    </section>
 
-        <section>
-            <h2>FAQ</h2>
-            <dl>
-                <dt>What can this library do?</dt>
-                <dd>
-                    It can retrieve transaction history from your account, card transaction history, account balance,
-                    savings information, and more but it need your credentials to access your account and phone otp to transfer money.
-                </dd>
+    <section>
+        <h2>FAQ</h2>
+        <dl>
+            <dt>What can this library do?</dt>
+            <dd>
+                It can retrieve transaction history from your account, card transaction history, account balance,
+                savings information, and more but it need your credentials to access your account and phone otp to
+                transfer money.
+            </dd>
 
-                <dt>Is this library going to hack my account?</dt>
-                <dd>
-                    No. Everything runs locally and the library only makes requests to MB Bank's API. Keep your
-                    credentials private.
-                </dd>
+            <dt>Is this library going to hack my account?</dt>
+            <dd>
+                No. Everything runs locally and the library only makes requests to MB Bank's API. Keep your
+                credentials private.
+            </dd>
 
-                <dt>Will my account be banned if I use this library?</dt>
-                <dd>
-                    I can't guarantee that — use it at your own risk.
-                </dd>
+            <dt>Will my account be banned if I use this library?</dt>
+            <dd>
+                I can't guarantee that — use it at your own risk.
+            </dd>
 
-                <dt>Can I run the OCR model on CPU?</dt>
-                <dd>
-                    Yes. CPU mode is supported, but it may be slower than using a GPU (CUDA).
-                </dd>
-            </dl>
-        </section>
-    </main>
+            <dt>Can I run the OCR model on CPU?</dt>
+            <dd>
+                Yes. CPU mode is supported, but it may be slower than using a GPU (CUDA).
+            </dd>
+            <dt>What should I do if I get a CryptoVerifyError?</dt>
+            <dd>
+                You can proxy your requests to a Vietnamese IP address or use a VPN service to connect through Vietnam.
+                If you'd like to help contribute to bypassing this issue, please visit
+                <a href="https://github.com/thedtvn/MBBank/issues/16">this GitHub issue</a>.
+            </dd>
+        </dl>
+    </section>
+</main>
 </body>
 
 </html>
