@@ -6,8 +6,8 @@ A lightweight Python client for the MBBank API.
 
 Features
 --------
-- **Async API** – [mbbank.asyncio](./mbbank/asyncio.html)
-- **Sync API** – [mbbank.main](./mbbank/main.html)
+- **Async API** – [mbbank.aio](./mbbank/aio.html)
+- **Sync API** – [mbbank.sync](./mbbank/sync.html)
 - **Image Processing** – [mbbank.capcha_ocr](./mbbank/capcha_ocr.html)
 - **Response Models** – [mbbank.modals](./mbbank/modals.html)
 - **Errors** – [mbbank.errors](./mbbank/errors.html)
@@ -145,9 +145,9 @@ print("Card list: ", mb.getCardList())
 More examples can be found on the [GitHub repository](https://github.com/thedtvn/MBBank/tree/main/examples).
 """
 
-from .asyncio import MBBankAsync, TransferContextAsync
+from .aio import MBBankAsync, TransferContextAsync
 from .capcha_ocr import CapchaOCR, CapchaProcessing
-from .main import MBBank, TransferContext
+from .sync import MBBank, TransferContext
 
 __all__ = [
     "MBBank",

@@ -3,27 +3,23 @@ import base64
 import concurrent.futures
 import datetime
 import hashlib
-import ssl
 import typing
 
 import aiohttp
 
+from mbbank.base import MBBankBase
 from mbbank.capcha_ocr import CapchaProcessing
 from mbbank.errors import (
     BankNotFoundError,
     CapchaError,
     CryptoVerifyError,
     MBBankAPIError,
-    MBBankError,
 )
-from mbbank.main import MBBank, TransferContext, headers_default
 from mbbank.modals import (
     AccountByPhoneResponseModal,
     AccountNameResponseModal,
     ATMAccountNameResponseModal,
     ATMCardIDResponseModal,
-    AuthListItem,
-    AuthTransferResponseModal,
     BalanceLoyaltyResponseModal,
     BalanceResponseModal,
     Bank,
@@ -37,19 +33,15 @@ from mbbank.modals import (
     SavingDetailResponseModal,
     SavingListResponseModal,
     ServiceTokenResponseModal,
-    TransactionAuthenResponseModal,
     TransactionHistoryResponseModal,
-    TransferResponseModal,
     UserInfoResponseModal,
 )
 from mbbank.wasm_helper import wasm_encrypt
 
-pool = (
-    concurrent.futures.ThreadPoolExecutor()
-)  # thread pool for blocking tasks like OCR and wasm
+from .transfer import TransferContextAsync
 
 
-class MBBankAsync(MBBank):
+class MBBankAsync(MBBankBase):
     """Core Async class
 
     Attributes:
@@ -64,6 +56,8 @@ class MBBankAsync(MBBank):
         retry_times (int, optional): number of retry times for capcha processing. Defaults to 30 ( worst case ).
         timeout (Union[float, Tuple[float, float]], optional): request timeout in seconds or (connect timeout, read timeout) or None for no timeout. Defaults to None.
     """
+
+    THREAD_POOL = concurrent.futures.ThreadPoolExecutor()
 
     def __init__(
         self,
@@ -81,7 +75,6 @@ class MBBankAsync(MBBank):
             ocr_class=ocr_class,
             retry_times=retry_times,
         )
-        # convert proxy dict by requests to aiohttp format
         if proxy is not None:
             self.proxy = proxy
         else:
@@ -91,23 +84,13 @@ class MBBankAsync(MBBank):
                 self.timeout = aiohttp.ClientTimeout(
                     connect=timeout[0], sock_read=timeout[1]
                 )
-            else:
+            elif isinstance(timeout, (int, float)):
                 self.timeout = aiohttp.ClientTimeout(total=timeout)
         else:
             self.timeout = None
 
     def _create_session(self) -> aiohttp.ClientSession:
-        ssl_ctx = ssl.create_default_context()
-        ssl_ctx.set_ciphers(
-            "DEFAULT:@SECLEVEL=1"
-        )  # make it look like a normal browser request or requests
-        connector = aiohttp.TCPConnector(ssl=ssl_ctx)
-        session_args = {
-            "connector": connector,
-        }
-        if self.timeout is not None:
-            session_args["timeout"] = self.timeout
-        return aiohttp.ClientSession(**session_args)
+        return aiohttp.ClientSession(timeout=self.timeout)
 
     async def _get_wasm_file(self):
         if self._wasm_cache is not None:
@@ -115,7 +98,7 @@ class MBBankAsync(MBBank):
         async with self._create_session() as s:
             async with s.get(
                 "https://online.mbbank.com.vn/assets/wasm/main.wasm",
-                headers=headers_default,
+                headers=self.HEADERS_DEFAULT,
                 proxy=self.proxy,
             ) as r:
                 self._wasm_cache = await r.read()
@@ -134,7 +117,7 @@ class MBBankAsync(MBBank):
             "refNo": rid,
             "deviceIdCommon": self.deviceIdCommon,
         }
-        headers = headers_default.copy()
+        headers = self.HEADERS_DEFAULT.copy()
         headers["X-Request-Id"] = rid
         headers["Deviceid"] = self.deviceIdCommon
         headers["Refno"] = rid
@@ -145,8 +128,6 @@ class MBBankAsync(MBBank):
                 json=json_data,
                 proxy=self.proxy,
             ) as r:
-                if r.status == 428:
-                    raise CryptoVerifyError(await r.text(), r.content_type)
                 data_out = await r.json()
                 return base64.b64decode(data_out["imageString"])
 
@@ -170,14 +151,13 @@ class MBBankAsync(MBBank):
             "ibAuthen2faString": self.FPR,
         }
         wasm_bytes = await self._get_wasm_file()
-        loop = asyncio.get_running_loop()
-        data_encrypt = await loop.run_in_executor(
-            pool, wasm_encrypt, wasm_bytes, payload
+        data_encrypt = await asyncio.get_running_loop().run_in_executor(
+            self.THREAD_POOL, wasm_encrypt, wasm_bytes, payload
         )
         async with self._create_session() as s:
             async with s.post(
                 "https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
-                headers=headers_default,
+                headers=self.HEADERS_DEFAULT,
                 json={"dataEnc": data_encrypt},
                 proxy=self.proxy,
             ) as r:
@@ -206,10 +186,11 @@ class MBBankAsync(MBBank):
             self.sessionId = None
             img_bytes = await self.get_capcha_image()
             text = await asyncio.get_event_loop().run_in_executor(
-                pool, self.ocr_class.process_image, img_bytes
+                self.THREAD_POOL, self.ocr_class.process_image, img_bytes
             )
             try:
-                return await self.login(text)
+                await self.login(text)
+                return
             except MBBankAPIError as e:
                 if e.code == "GW283":
                     continue  # capcha error, try again
@@ -235,7 +216,7 @@ class MBBankAsync(MBBank):
                 "deviceIdCommon": self.deviceIdCommon,
             }
             json_data.update(json)
-            headers.update(headers_default)
+            headers.update(self.HEADERS_DEFAULT)
             headers["X-Request-Id"] = rid
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
@@ -243,7 +224,7 @@ class MBBankAsync(MBBank):
                 wasm_bytes = await self._get_wasm_file()
                 loop = asyncio.get_running_loop()
                 data_encrypt = await loop.run_in_executor(
-                    pool, wasm_encrypt, wasm_bytes, json_data
+                    self.THREAD_POOL, wasm_encrypt, wasm_bytes, json_data
                 )
                 json_data = {"dataEnc": data_encrypt}
             async with self._create_session() as s:
@@ -593,7 +574,7 @@ class MBBankAsync(MBBank):
             MBBankAPIError: if api response not ok
         """
         service_token = await self.getServiceToken()
-        headers = headers_default.copy()
+        headers = self.HEADERS_DEFAULT.copy()
         headers["authorization"] = service_token.type + " " + service_token.token
         json_data = {
             "cardNumber": cardNumber,
@@ -699,220 +680,3 @@ class MBBankAsync(MBBank):
             message=message,
         )
         return await context.start()
-
-
-class TransferContextAsync(TransferContext):
-    def __init__(
-        self,
-        mbbank_instance: MBBankAsync,
-        *,
-        src_account: str,
-        dest_account: str,
-        bank_code: str,
-        amount: int,
-        message: str,
-    ):
-        super().__init__(
-            mbbank_instance,
-            src_account=src_account,
-            dest_account=dest_account,
-            bank_code=bank_code,
-            amount=amount,
-            message=message,
-        )
-        self.mbbank: MBBankAsync = mbbank_instance
-
-    async def getBank(self) -> Bank:
-        """
-        Get transfer destination bank info
-
-        Returns:
-            success (Bank): bank info
-        """
-        if self.bank is not None:
-            return self.bank
-        bank_list = await self.mbbank.getBankList()
-        for bank in bank_list.listBank:
-            if bank.bankCode == self.bank_code:
-                self.bank = bank
-                return bank
-        raise BankNotFoundError("Bank code not found in bank list")
-
-    async def verify_transfer(self) -> TransferResponseModal:
-        """
-        Verify transfer info before making transfer
-
-        Note: This for advance flow only, normal flow not need to call this method directly use get_qr_code instead
-
-        Returns:
-            success (TransferResponseModal): verify transfer response
-
-        Raises:
-            MBBankError: if start() not called before verify_transfer() to prepare bank and account name
-            MBBankAPIError: if api response not ok
-        """
-        if self.bank is None or self.to_account_name is None:
-            raise MBBankError(
-                "Call start() before verify_transfer() to prepare bank and account name"
-            )
-        json_data = {
-            "srcAccountNumber": self.src_account,
-            "benAccountNumber": self.dest_account,
-            "benAccountName": self.to_account_name.benName,
-            "benBankCd": self.bank.bankCode,
-            "amount": self.amount,
-            "message": self.message,
-            "transferType": self.bank.typeTransfer,
-            "destType": "ACCOUNT",
-            "otp": "",
-        }
-        data_out = await self.mbbank._req(
-            "https://online.mbbank.com.vn/api/retail_web/transfer/v1.0/verify-make-transfer",
-            json=json_data,
-            encrypt=True,
-        )
-        return TransferResponseModal.model_validate(data_out, strict=True)
-
-    async def get_auth_list(self) -> AuthTransferResponseModal:
-        """
-        Get authentication method list for transfer
-
-        Returns:
-            success (AuthTransferResponseModal): authentication method list
-
-        Raises:
-            MBBankAPIError: if api response not ok
-            BankNotFoundError: if bank code not found in bank list
-        """
-        if self.bank is None:
-            await self.getBank()
-        json_data = {
-            "sourceAccount": self.src_account,
-            "amount": self.amount,
-            "serviceCode": f"GCM_FTR_DOM_{self.bank.typeTransfer}",
-        }
-        data_out = await self.mbbank._req(
-            "https://online.mbbank.com.vn/api/retail_web/internetbanking/getAuthList",
-            json=json_data,
-            encrypt=True,
-        )
-        return AuthTransferResponseModal.model_validate(data_out, strict=True)
-
-    async def create_transaction_authen(self) -> TransactionAuthenResponseModal:
-        """
-        Create transaction authentication payload
-
-        Note: This for advance flow only, normal flow not need to call this method directly use get_qr_code instead
-
-        Returns:
-            success (TransactionAuthenResponseModal): transaction authentication response
-
-        Raises:
-            MBBankAPIError: if api response not ok
-        """
-        if self.to_account_name is None or self.bank is None:
-            raise MBBankError(
-                "Call start() before create_transaction_authen() to prepare account name"
-            )
-        self.refNo = f"{self.mbbank._userid}-{self.mbbank._get_now_time()}"
-        userinfo = await self.mbbank.userinfo()
-        custId = userinfo.cust.id
-        json_data = {
-            "transactionAuthen": {
-                "refNo": self.refNo,
-                "custId": custId,
-                "sourceAccount": self.src_account,
-                "destAccount": self.dest_account,
-                "amount": self.amount,
-                "transactionType": f"GCM_FTR_DOM_{self.bank.typeTransfer}",
-                "destAccountName": self.to_account_name.benName,
-            }
-        }
-        data_out = await self.mbbank._req(
-            "https://online.mbbank.com.vn/api/retail_web/vtap/createTransactionAuthen",
-            json=json_data,
-            encrypt=True,
-        )
-        return TransactionAuthenResponseModal.model_validate(data_out, strict=True)
-
-    async def transfer(
-        self, otp: str, auth_type: AuthListItem
-    ) -> TransferResponseModal:
-        """
-        Execute transfer with provided OTP
-
-        Args:
-            otp (str): OTP code from authentication method
-            auth_type (AuthListItem): authentication method get from get_auth_list()
-
-        Returns:
-            success (TransferResponseModal): transfer response
-
-        Raises:
-            MBBankError: if get_qr_code() not called before transfer()
-            MBBankAPIError: if api response not ok
-        """
-        if self.transaction_authen is None or self.timestamp is None:
-            raise MBBankError(
-                "Call get_qr_code() before transfer() to prepare authentication"
-            )
-        elif self.bank is None or self.to_account_name is None:
-            raise MBBankError(
-                "Call start() before transfer() to prepare bank and account name"
-            )
-        otp_crafted = self._craft_otp(otp, auth_type)
-        json_data = {
-            "srcAccountNumber": self.src_account,
-            "benAccountNumber": self.dest_account,
-            "benAccountName": self.to_account_name.benName,
-            "benBankCd": self.bank.bankCode,
-            "message": self.message,
-            "transferType": self.bank.typeTransfer,
-            "destType": "ACCOUNT",
-            "amount": self.amount,
-            "otp": otp_crafted,
-        }
-        data_out = await self.mbbank._req(
-            "https://online.mbbank.com.vn/api/retail_web/transfer/v1.0/make-transfer",
-            json=json_data,
-            encrypt=True,
-        )
-        return TransferResponseModal.model_validate(data_out, strict=True)
-
-    async def get_qr_code(self) -> str:
-        """
-        Get QR code string for authentication
-
-        Returns:
-            success (str): QR code content string
-
-        Raises:
-            MBBankError: if start() not called before get_qr_code() to prepare
-            MBBankAPIError: if api response not ok
-        """
-        self.timestamp = int(datetime.datetime.now().timestamp())
-        transaction_response = await self.create_transaction_authen()
-        self.transaction_authen = transaction_response.transactionAuthen
-        return f"TRANID|{self.transaction_authen.id}"
-
-    async def start(self) -> "TransferContextAsync":
-        """
-        Start transfer process
-        This will verify transfer info and prepare for authentication
-
-        Note: This for advance flow only, normal flow not need to call this method directly use makeTransferAccountToAccount instead.
-
-        Returns:
-            success (TransferContextAsync): self instance for chaining
-
-        Raises:
-            MBBankAPIError: if api response not ok
-        """
-        bank = await self.getBank()
-        self.to_account_name = await self.mbbank.getAccountName(
-            accountNo=self.dest_account,
-            bankCode=bank.bankCode,
-            debitAccount=self.src_account,
-        )
-        await self.verify_transfer()
-        return self

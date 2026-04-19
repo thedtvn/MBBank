@@ -1,11 +1,13 @@
 import io
+from typing import Optional
+
 from mb_capcha_ocr import OcrModel
 from PIL import Image
 
 
 class CapchaProcessing:
     """
-    Base class for capcha processing for self implemented
+    Base class for capcha processing for self-implemented
     Examples:
     ```py
     class MyCapchaProcessing(CapchaProcessing):
@@ -39,7 +41,7 @@ class CapchaOCR(CapchaProcessing):
         model_path (str, optional): path to model file
     """
 
-    def __init__(self, model_path: str = None):
+    def __init__(self, model_path: Optional[str] = None):
         super().__init__()
         # loading model will take about 1-3 seconds
         self.model = OcrModel(model_path)

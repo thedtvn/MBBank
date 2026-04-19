@@ -22,8 +22,8 @@ def generate_docs(is_read_the_docs: bool = False) -> None:
     modules = [
         "mbbank",
         "mbbank.capcha_ocr",
-        "mbbank.main",
-        "mbbank.asyncio",
+        "mbbank.sync",
+        "mbbank.aio",
         "mbbank.modals",
         "mbbank.errors",
     ]

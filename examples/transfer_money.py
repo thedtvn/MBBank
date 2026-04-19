@@ -1,7 +1,7 @@
-import mbbank
-
 # requires 'qrcode[pil]' package for QR code generation
-import qrcode
+import qrcode  # ty: ignore[unresolved-import]
+
+import mbbank
 
 username = input("Enter your username: ")
 password = input("Enter your password: ")

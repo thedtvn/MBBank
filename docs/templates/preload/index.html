@@ -14,7 +14,6 @@
         <h1>Welcome to MBBank API for Python</h1>
         <p class="lead">A small Python library to interact with MB Bank APIs.</p>
     </header>
-
     <section>
         <h2>Why we have this library?</h2>
         <p>
@@ -22,21 +21,23 @@
             <a href="https://casso.vn/" target="_blank" rel="noopener">casso.vn</a>
             or
             <a href="https://payos.vn/" target="_blank" rel="noopener">payos.vn</a>
-            when they provide freemium tiers with limits.
+            when they provide freemium tiers with limits. This will support for small and medium projects that need to
+            interact with MB Bank's API without worrying about costs or limits.
         </p>
         <p>
-            This library lets you build your own code around the MB Bank API so you can use it freely without
+            This library lets you build your own code around the MB Bank API, so you can use it freely without
             depending on third-party paid gateways.
         </p>
     </section>
-
     <section>
         <h2>Requires</h2>
         <ul>
-            <li><a href="https://onnxruntime.ai/getting-started" target="_blank" rel="noopener">ONNX Runtime (with
-                CUDA)</a> — optional if you want to use a CUDA GPU for OCR.
+            <li>
+                <a href="https://onnxruntime.ai/getting-started" target="_blank" rel="noopener">
+                    ONNX Runtime (with CUDA)
+                </a> — optional if you want to use a CUDA GPU for OCR.
             </li>
-            <li>Python 3</li>
+            <li>Python 3.10 or higher</li>
         </ul>
     </section>
 
@@ -53,12 +54,12 @@
             <li>
                 <strong>
                     Async API
-                </strong> – <a href="./mbbank/asyncio.html">mbbank.asyncio</a>
+                </strong> – <a href="./mbbank/aio.html">mbbank.aio</a>
             </li>
             <li>
                 <strong>
                     Sync API
-                </strong> – <a href="./mbbank/main.html">mbbank.main</a>
+                </strong> – <a href="./mbbank/sync.html">mbbank.sync</a>
             </li>
             <li>
                 <strong>
@@ -84,7 +85,7 @@
             <dt>What can this library do?</dt>
             <dd>
                 It can retrieve transaction history from your account, card transaction history, account balance,
-                savings information, and more but it need your credentials to access your account and phone otp to
+                savings information, and more, but it needs your credentials to access your account and phone otp to
                 transfer money.
             </dd>
 
@@ -108,6 +109,13 @@
                 You can proxy your requests to a Vietnamese IP address or use a VPN service to connect through Vietnam.
                 If you'd like to help contribute to bypassing this issue, please visit
                 <a href="https://github.com/thedtvn/MBBank/issues/16">this GitHub issue</a>.
+            </dd>
+            <dt>Can i warp this and sell as an API?</dt>
+            <dd>
+                I will not recommend because software and services should be free and open source.
+                If you use for your own API payment gateway is acceptable.
+                However, if you make API service and sell. I would not recommend because it is not ethical, and it is
+                not good for the community.
             </dd>
         </dl>
     </section>

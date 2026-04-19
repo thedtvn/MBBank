@@ -1,0 +1,91 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out the sections below so we can reproduce and fix it.
+
+  - type: input
+    id: version
+    attributes:
+      label: Library Version
+      description: "Output of `pip show mbbank-lib` or the version you installed"
+      placeholder: "e.g. 0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: "Output of `python --version`"
+      placeholder: "e.g. 3.12.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: api
+    attributes:
+      label: Affected API
+      description: Which part of the library is affected?
+      options:
+        - Login / Authentication
+        - getBalance
+        - getTransactionAccountHistory
+        - getTransactionCardHistory
+        - transfer
+        - Async variant
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what happened and what you expected instead.
+      placeholder: |
+        **What happened:**
+        ...
+
+        **What I expected:**
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal code or steps to reproduce the issue.
+      render: python
+      placeholder: |
+        import mbbank
+
+        mb = mbbank.MBBank(username="...", password="...")
+        mb.getBalance()  # raises ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Error / Traceback
+      description: Full traceback or error message (if any). **Remove any personal info (account numbers, passwords, etc.).**
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: OS, network environment, or any other relevant info.
+
+  - type: checkboxes
+    id: sensitive-data
+    attributes:
+      label: Sensitive Data
+      options:
+        - label: I have removed all sensitive data (passwords, account numbers, tokens, personal info) from this report.
+          required: true
