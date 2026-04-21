@@ -16,7 +16,7 @@ dependencies = [
     "aiohttp==3.13.5",
     "wasmtime==43.0.0",
     "mb-capcha-ocr==0.1.6",
-    "pydantic==2.13.2",
+    "pydantic==2.13.3",
 ]
 
 [project.urls]
