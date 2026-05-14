@@ -12,7 +12,7 @@ license = "MIT"
 
 dependencies = [
     "Pillow==12.2.0",
-    "requests==2.34.0",
+    "requests==2.34.1",
     "aiohttp==3.13.5",
     "wasmtime==44.0.0",
     "mb-capcha-ocr==0.1.6",
