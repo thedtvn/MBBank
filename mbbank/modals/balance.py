@@ -1,5 +1,4 @@
-from .base import BaseResponseModal, Account
-from typing import List
+from .base import Account, BaseResponseModal
 
 
 class BalanceResponseModal(BaseResponseModal):
@@ -7,7 +6,7 @@ class BalanceResponseModal(BaseResponseModal):
     Model for the balance response containing lists of accounts and total balances.
     """
 
-    acct_list: List[Account]
-    internationalAcctList: List[Account]
+    acct_list: list[Account]
+    internationalAcctList: list[Account]
     totalBalanceEquivalent: str
     currencyEquivalent: str

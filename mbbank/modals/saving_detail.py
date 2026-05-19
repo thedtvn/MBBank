@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
 from typing import Optional
+
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class SavingDetail(BaseModel):

@@ -1,6 +1,8 @@
+# ruff: noqa
 import dataclasses
 import json
 import struct
+
 import wasmtime
 
 
@@ -179,16 +181,7 @@ class fs_object:
             O_APPEND: int
             O_EXCL: int
 
-        self.constants = constants_object(
-            **{
-                "O_WRONLY": -1,
-                "O_RDWR": -1,
-                "O_CREAT": -1,
-                "O_TRUNC": -1,
-                "O_APPEND": -1,
-                "O_EXCL": -1,
-            }
-        )
+        self.constants = constants_object(O_WRONLY=-1, O_RDWR=-1, O_CREAT=-1, O_TRUNC=-1, O_APPEND=-1, O_EXCL=-1)
 
     def enosys(self):
         raise NotImplementedError
@@ -210,7 +203,6 @@ class process_object:
     def __init__(self):
         self.ppid = -1
         self.pid = -1
-        pass
 
     def getuid(self):
         return -1
@@ -235,11 +227,7 @@ class dict_warper:
             setattr(self, key, value)
 
     def to_dict(self):
-        return {
-            key: getattr(self, key)
-            for key in dir(self)
-            if not (key.startswith("__") or key == "to_dict")
-        }
+        return {key: getattr(self, key) for key in dir(self) if not (key.startswith("__") or key == "to_dict")}
 
 
 class hash_list(list):

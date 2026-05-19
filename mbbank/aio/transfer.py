@@ -1,6 +1,7 @@
 import datetime
 import typing
 
+from mbbank.base import TransferContextBase
 from mbbank.errors import BankNotFoundError, MBBankError
 from mbbank.modals import (
     AuthListItem,
@@ -9,7 +10,6 @@ from mbbank.modals import (
     TransactionAuthenResponseModal,
     TransferResponseModal,
 )
-from mbbank.base import TransferContextBase
 
 if typing.TYPE_CHECKING:
     from mbbank.aio import MBBankAsync
@@ -96,9 +96,7 @@ class TransferContextAsync(TransferContextBase):
             MBBankAPIError: if api response not ok
         """
         if self.bank is None or self.to_account_name is None:
-            raise MBBankError(
-                "Call start() before verify_transfer() to prepare bank and account name"
-            )
+            raise MBBankError("Call start() before verify_transfer() to prepare bank and account name")
         json_data = {
             "srcAccountNumber": self.src_account,
             "benAccountNumber": self.dest_account,
@@ -155,9 +153,7 @@ class TransferContextAsync(TransferContextBase):
             MBBankAPIError: if api response not ok
         """
         if self.to_account_name is None or self.bank is None:
-            raise MBBankError(
-                "Call start() before create_transaction_authen() to prepare account name"
-            )
+            raise MBBankError("Call start() before create_transaction_authen() to prepare account name")
         self.refNo = f"{self.mbbank._userid}-{self.mbbank._get_now_time()}"
         userinfo = await self.mbbank.userinfo()
         custId = userinfo.cust.id
@@ -179,9 +175,7 @@ class TransferContextAsync(TransferContextBase):
         )
         return TransactionAuthenResponseModal.model_validate(data_out, strict=True)
 
-    async def transfer(
-        self, otp: str, auth_type: AuthListItem
-    ) -> TransferResponseModal:
+    async def transfer(self, otp: str, auth_type: AuthListItem) -> TransferResponseModal:
         """
         Execute transfer with provided OTP
 
@@ -197,13 +191,9 @@ class TransferContextAsync(TransferContextBase):
             MBBankAPIError: if api response not ok
         """
         if self.transaction_authen is None or self.timestamp is None:
-            raise MBBankError(
-                "Call get_qr_code() before transfer() to prepare authentication"
-            )
-        elif self.bank is None or self.to_account_name is None:
-            raise MBBankError(
-                "Call start() before transfer() to prepare bank and account name"
-            )
+            raise MBBankError("Call get_qr_code() before transfer() to prepare authentication")
+        if self.bank is None or self.to_account_name is None:
+            raise MBBankError("Call start() before transfer() to prepare bank and account name")
         otp_crafted = self._craft_otp(otp, auth_type)
         json_data = {
             "srcAccountNumber": self.src_account,

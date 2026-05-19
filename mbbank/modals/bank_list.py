@@ -1,6 +1,8 @@
-from typing import List, Optional
-from .base import BaseResponseModal
+from typing import Optional
+
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class Bank(BaseModel):
@@ -28,4 +30,4 @@ class BankListResponseModal(BaseResponseModal):
     Response model for a list of banks.
     """
 
-    listBank: List[Bank]
+    listBank: list[Bank]

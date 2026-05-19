@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
-from typing import List, Optional
+from typing import Optional
+
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class ProductProperty(BaseModel):
@@ -64,7 +66,7 @@ class SavingInfo(BaseModel):
     productName: Optional[str] = None
     maturityInstructions: str
     productProperty: ProductProperty
-    savingLimits: List[SavingLimits]
+    savingLimits: list[SavingLimits]
     isDeposit: bool
     isShowDeposit: bool
     isWithDraw: bool
@@ -87,7 +89,7 @@ class SavingSection(BaseModel):
 
     total: int
     totalExpectInterestFund: int
-    data: List[SavingInfo]
+    data: list[SavingInfo]
 
 
 class SavingData(BaseModel):

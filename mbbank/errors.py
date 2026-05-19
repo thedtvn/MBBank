@@ -14,7 +14,7 @@ class MBBankAPIError(Exception):
 
     def __init__(self, err_out):
         self.code = err_out["responseCode"]
-        if self.code in custom_messages.keys():
+        if self.code in custom_messages:
             self.message = custom_messages[self.code]
         else:
             self.message = err_out["message"]

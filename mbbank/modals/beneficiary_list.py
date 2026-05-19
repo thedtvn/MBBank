@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
+from typing import Optional
+
 from pydantic import BaseModel
-from typing import List, Optional, Union
+
+from .base import BaseResponseModal
 
 
 class BeneficiaryPayment(BaseModel):
@@ -67,7 +69,7 @@ class BeneficiaryListResponseModal(BaseResponseModal):
     if transactionType is "PAYMENT", the list contains BeneficiaryPayment objects.
     """
 
-    favorBeneficiaryList: List[Union[BeneficiaryTransfer, BeneficiaryPayment]]
+    favorBeneficiaryList: list[BeneficiaryTransfer | BeneficiaryPayment]
 
 
 class SavedBeneficiaryListResponseModal(BaseResponseModal):
@@ -75,5 +77,5 @@ class SavedBeneficiaryListResponseModal(BaseResponseModal):
     Model representing the response for a list of saved beneficiaries.
     """
 
-    baseFtList: List[BeneficiaryTransfer]
-    billPayeeList: Optional[List[BeneficiaryPayment]] = None
+    baseFtList: list[BeneficiaryTransfer]
+    billPayeeList: Optional[list[BeneficiaryPayment]] = None

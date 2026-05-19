@@ -27,11 +27,7 @@ def generate_docs(is_read_the_docs: bool = False) -> None:
         "mbbank.modals",
         "mbbank.errors",
     ]
-    output_dir = Path(
-        "docs"
-        if not is_read_the_docs
-        else os.getenv("READTHEDOCS_OUTPUT", ".") + "/html/"
-    )
+    output_dir = Path("docs" if not is_read_the_docs else os.getenv("READTHEDOCS_OUTPUT", ".") + "/html/")
     pdoc.render.configure(
         docformat="google",
         show_source=True,

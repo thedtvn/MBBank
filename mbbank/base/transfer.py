@@ -68,12 +68,6 @@ class TransferContextBase:
         self.bank = None
 
     def _craft_otp(self, otp: str, auth_type: AuthListItem) -> str:
-        if (
-            self.timestamp is None
-            or self.refNo is None
-            or self.transaction_authen is None
-        ):
-            raise MBBankError(
-                "Call get_qr_code() before _craft_otp() to prepare authentication"
-            )
+        if self.timestamp is None or self.refNo is None or self.transaction_authen is None:
+            raise MBBankError("Call get_qr_code() before _craft_otp() to prepare authentication")
         return f"ibr|{auth_type.code}||{otp}||{self.timestamp}|{self.transaction_authen.id}|{self.refNo}"

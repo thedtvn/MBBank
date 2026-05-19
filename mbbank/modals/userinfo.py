@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -242,22 +242,22 @@ class CustModel(BaseModel):
     chargeCd: Optional[Any]
     menuCd: Optional[Any]
     limitCd: Optional[Any]
-    acct_list: Optional[Dict[str, UserInfoAccountModel]]
-    cardList: Optional[Dict[str, UserInfoCardModel]]
-    saving_acct_list: Optional[Dict[str, UserInfoAccountModel]]
+    acct_list: Optional[dict[str, UserInfoAccountModel]]
+    cardList: Optional[dict[str, UserInfoCardModel]]
+    saving_acct_list: Optional[dict[str, UserInfoAccountModel]]
     photoStr: Optional[Any]
     maxInactiveInterval: Optional[str]
-    menuList: Optional[List[MenuModel]]
+    menuList: Optional[list[MenuModel]]
     lastLogin: Optional[str]
     ctryCd: Optional[str]
     refNumber: Optional[Any]
     createdDt: Optional[int]
     isSoftToken: Optional[str]
-    softTokenList: Optional[List[SoftTokenModel]]
+    softTokenList: Optional[list[SoftTokenModel]]
     deviceId: Optional[str]
     authDevice: Optional[Any]
     isMBCust: Optional[str]
-    promotionUserList: Optional[List[Any]]
+    promotionUserList: Optional[list[Any]]
     isAcceptDigitalOTP: Optional[str]
     sectorDetail: Optional[SectorDetailModel]
     isOnlineSector: Optional[str]
@@ -266,12 +266,12 @@ class CustModel(BaseModel):
     corpBook: Optional[str]
     isNeedUpdateLimit: Optional[Any]
     idExpiryDate: Optional[int]
-    biomatricAuthDeviceList: Optional[List[BiometricAuthDeviceModel]]
+    biomatricAuthDeviceList: Optional[list[BiometricAuthDeviceModel]]
     inactiveReason: Optional[Any]
     defaultAccount: Optional[UserInfoAccountModel]
     email2: Optional[Any]
     passportExpDate: Optional[Any]
-    featureInfo: Optional[Dict[str, Any]]
+    featureInfo: Optional[dict[str, Any]]
     requestId: Optional[Any]
     addr3: Optional[Any]
     rcfromState: Optional[str]
@@ -291,7 +291,7 @@ class UserInfoResponseModal(BaseResponseModal):
 
     sessionId: str
     cust: CustModel
-    menuManager: List[MenuManagerModel]
+    menuManager: list[MenuManagerModel]
     interfaceType: InterfaceTypeModel
     maskingPhone: Optional[Any]
     listPhoneId: Optional[Any]

@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
+from typing import Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
+
+from .base import BaseResponseModal
 
 
 class CardTransaction(BaseModel):
@@ -27,4 +29,4 @@ class CardTransaction(BaseModel):
 class CardTransactionsResponseModal(BaseResponseModal):
     """Response model for a list of card transactions."""
 
-    transactionHistoryList: List[CardTransaction]
+    transactionHistoryList: list[CardTransaction]

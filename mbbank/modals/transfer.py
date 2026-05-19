@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Any, List
+
+from .base import BaseResponseModal
 
 
 class AddInfo(BaseModel):
@@ -53,7 +55,7 @@ class AuthTransferResponseModal(BaseResponseModal):
     Model for authenticating transfer message response.
     """
 
-    authList: List[AuthListItem]
+    authList: list[AuthListItem]
 
 
 # Yes somehow this obj has refNo

@@ -70,7 +70,7 @@ body:
   - type: textarea
     id: traceback
     attributes:
-      label: Error / Traceback
+      label: Error / Traceback / Logs
       description: Full traceback or error message (if any). **Remove any personal info (account numbers, passwords, etc.).**
       render: shell
 

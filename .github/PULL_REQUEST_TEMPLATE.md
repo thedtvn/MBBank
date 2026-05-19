@@ -18,7 +18,7 @@
 - [ ] I has has check carefully what AI has generated.
 - [ ] I know what AI has generated and I take full responsibility for it.
 - [ ] I have tested my changes locally.
-- [ ] I am vibe coder and i have no idea what I am doing.
+- [ ] I am vibecoder, and i have no idea what I am doing.
 
 ## Checklist
 

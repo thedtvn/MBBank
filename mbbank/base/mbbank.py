@@ -18,9 +18,9 @@ class MBBankBase:
         retry_times (int, optional): number of retry times for capcha processing. Defaults to 30 ( worst case ).
     """
 
-    FPR = "c7a1beebb9400375bb187daa33de9659"
+    FPR: typing.ClassVar[str] = "c7a1beebb9400375bb187daa33de9659"
 
-    HEADERS_DEFAULT = {
+    HEADERS_DEFAULT: typing.ClassVar[dict] = {
         "Cache-Control": "max-age=0",
         "Accept": "application/json, text/plain, */*",
         "Authorization": "Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm",

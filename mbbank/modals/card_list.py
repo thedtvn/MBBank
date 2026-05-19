@@ -1,6 +1,8 @@
-from .base import BaseResponseModal
-from typing import List, Optional
+from typing import Optional
+
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class Card(BaseModel):
@@ -40,6 +42,6 @@ class CardListResponseModal(BaseResponseModal):
     Model for the card list response containing lists of cards.
     """
 
-    cardList: List[Card]
-    cardClosed: List[Card]
-    cardOther: List[Card]
+    cardList: list[Card]
+    cardClosed: list[Card]
+    cardOther: list[Card]

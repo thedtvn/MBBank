@@ -10,25 +10,26 @@ exclude = [
 
 [lint]
 select = [
-    "E",      # pycodestyle errors
-    "F",      # pyflakes
-    "W",      # pycodestyle warnings
-    "I",      # isort
-    "UP",     # pyupgrade
-    "RUF",    # ruff-specific rules
-    "B",      # flake8-bugbear
-    "SIM",    # flake8-simplify
-    "PIE",    # flake8-pie
-    "RET",    # flake8-return
-    "S",      # flake8-bandit (security)
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "W", # pycodestyle warnings
+    "I", # isort
+    "UP", # pyupgrade
+    "RUF", # ruff-specific rules
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "PIE", # flake8-pie
+    "RET", # flake8-return
+    "S", # flake8-bandit (security)
 ]
 ignore = [
-    "N815",   # mixed-case-variable-in-class-scope (API uses camelCase)
-    "N802",   # invalid-function-name (API mirrors camelCase endpoints)
-    "N803",   # invalid-argument-name (camelCase params from API)
-    "UP045",  # non-pep604-annotation-optional (Optional[X] is fine)
+    "N815", # mixed-case-variable-in-class-scope (API uses camelCase)
+    "N802", # invalid-function-name (API mirrors camelCase endpoints)
+    "N803", # invalid-argument-name (camelCase params from API)
+    "UP045", # non-pep604-annotation-optional (Optional[X] is fine)
     "RUF002", # ambiguous-unicode-character-docstring (Vietnamese text)
-    "S324",   # hashlib-insecure-hash-function (required by MBBank API)
+    "S324", # hashlib-insecure-hash-function (required by MBBank API)
+    "E501" # line-too-long (allow longer lines for readability and docstrings)
 ]
 
 [lint.isort]

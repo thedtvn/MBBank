@@ -63,7 +63,7 @@ class MBBank(MBBankBase):
         proxy: typing.Optional[str] = None,
         ocr_class: typing.Optional[CapchaProcessing] = None,
         retry_times: int = 30,
-        timeout: typing.Union[float, typing.Tuple[float, float], None] = None,
+        timeout: float | tuple[float, float] | None = None,
     ):
         super().__init__(
             username=username,
@@ -199,8 +199,7 @@ class MBBank(MBBankBase):
             self._userinfo = data_out
             self._verify_biometric_check()
             return
-        else:
-            raise MBBankAPIError(data_out["result"])
+        raise MBBankAPIError(data_out["result"])
 
     def getServiceToken(self) -> ServiceTokenResponseModal:
         """
@@ -211,9 +210,7 @@ class MBBank(MBBankBase):
         """
         if self._userinfo is None:
             self._authenticate()
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail_web/common/getServiceToken"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
         return ServiceTokenResponseModal.model_validate(data_out, strict=True)
 
     def _authenticate(self):
@@ -231,14 +228,10 @@ class MBBank(MBBankBase):
                 if e.code == "GW283":
                     continue  # capcha error, try again
                 raise e  # other error raise up
-        raise CapchaError(
-            f"Exceeded maximum retry times for capcha processing ({self.retry_times})"
-        )
+        raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
 
     def _verify_biometric_check(self):
-        self._req(
-            "https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction"
-        )
+        self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
     def getTransactionAccountHistory(
         self,
@@ -286,9 +279,7 @@ class MBBank(MBBankBase):
         """
         if self._userinfo is None:
             self._authenticate()
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail-accountms/accountms/getBalance"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-accountms/accountms/getBalance")
         return BalanceResponseModal.model_validate(data_out, strict=True)
 
     def getBalanceLoyalty(self) -> BalanceLoyaltyResponseModal:
@@ -301,9 +292,7 @@ class MBBank(MBBankBase):
         Raises:
             MBBankAPIError: if api response not ok
         """
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/loyalty/getBalanceLoyalty")
         return BalanceLoyaltyResponseModal.model_validate(data_out, strict=True)
 
     def getInterestRate(self, currency: str = "VND") -> InterestRateResponseModal:
@@ -378,14 +367,10 @@ class MBBank(MBBankBase):
         Raises:
             MBBankAPIError: if api response not ok
         """
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail-savingms/saving/v3.0/getList"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-savingms/saving/v3.0/getList")
         return SavingListResponseModal.model_validate(data_out, strict=True)
 
-    def getSavingDetail(
-        self, accNo: str, accType: typing.Literal["OSA", "SBA"]
-    ) -> SavingDetailResponseModal:
+    def getSavingDetail(self, accNo: str, accType: typing.Literal["OSA", "SBA"]) -> SavingDetailResponseModal:
         """
         Get saving detail by account number
 
@@ -416,9 +401,7 @@ class MBBank(MBBankBase):
         Raises:
             MBBankAPIError: if api response not ok
         """
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail-onlineloanms/loan/getList"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-onlineloanms/loan/getList")
         return LoanListResponseModal.model_validate(data_out, strict=True)
 
     def getCardTransactionHistory(
@@ -466,9 +449,7 @@ class MBBank(MBBankBase):
             return BankListResponseModal.model_validate(
                 self._temp["bank_list"], strict=True
             )  # use cache seen as bank list not change often
-        data_out = self._req(
-            "https://online.mbbank.com.vn/api/retail_web/common/getBankList"
-        )
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getBankList")
         self._temp["bank_list"] = data_out
         return BankListResponseModal.model_validate(data_out, strict=True)
 
@@ -508,9 +489,7 @@ class MBBank(MBBankBase):
         )
         return SavedBeneficiaryListResponseModal.model_validate(data_out, strict=True)
 
-    def getAccountName(
-        self, accountNo: str, bankCode: str, debitAccount: str
-    ) -> AccountNameResponseModal:
+    def getAccountName(self, accountNo: str, bankCode: str, debitAccount: str) -> AccountNameResponseModal:
         """
         Get account name by account number
 
@@ -568,9 +547,7 @@ class MBBank(MBBankBase):
             data_out = r.json()
         return ATMCardIDResponseModal.model_validate(data_out, strict=True)
 
-    def getATMAccountName(
-        self, cardNumber: str, debitAccount: str
-    ) -> ATMAccountNameResponseModal:
+    def getATMAccountName(self, cardNumber: str, debitAccount: str) -> ATMAccountNameResponseModal:
         """
         Get ATM Account Name by card number
 

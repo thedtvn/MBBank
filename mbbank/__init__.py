@@ -150,12 +150,12 @@ from .capcha_ocr import CapchaOCR, CapchaProcessing
 from .sync import MBBank, TransferContext
 
 __all__ = [
-    "MBBank",
-    "TransferContext",
-    "MBBankAsync",
-    "TransferContextAsync",
-    "CapchaProcessing",
     "CapchaOCR",
+    "CapchaProcessing",
+    "MBBank",
+    "MBBankAsync",
+    "TransferContext",
+    "TransferContextAsync",
 ]
 
 __version__ = "0.3.0"

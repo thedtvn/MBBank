@@ -1,7 +1,8 @@
 from typing import Optional
+
 from pydantic import BaseModel
 
-__all__ = ["BaseResponseModal", "Account", "ServiceTokenResponseModal"]
+__all__ = ["Account", "BaseResponseModal", "ServiceTokenResponseModal"]
 
 
 class BaseResponseModal(BaseModel):
@@ -34,9 +35,7 @@ class Account(BaseModel):
     subCategory: Optional[str]
     t24AccountType: Optional[str]
     authorizationBalance: Optional[str] = None  # account_by_phone not have this field
-    authorizationLmtBalance: Optional[str] = (
-        None  # account_by_phone not have this field
-    )
+    authorizationLmtBalance: Optional[str] = None  # account_by_phone not have this field
     isPostpaidQr: Optional[str]
 
 

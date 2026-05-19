@@ -1,6 +1,6 @@
-from .base import BaseResponseModal
-from typing import List
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class Transaction(BaseModel):
@@ -34,4 +34,4 @@ class TransactionHistoryResponseModal(BaseResponseModal):
     List of transaction history response model.
     """
 
-    transactionHistoryList: List[Transaction]
+    transactionHistoryList: list[Transaction]

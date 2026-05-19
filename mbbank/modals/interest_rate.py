@@ -1,6 +1,6 @@
-from .base import BaseResponseModal
 from pydantic import BaseModel
-from typing import List
+
+from .base import BaseResponseModal
 
 
 class InterestRate(BaseModel):
@@ -23,4 +23,4 @@ class InterestRateResponseModal(BaseResponseModal):
     Interest Rate Response Modal
     """
 
-    interestRateList: List[InterestRate]
+    interestRateList: list[InterestRate]

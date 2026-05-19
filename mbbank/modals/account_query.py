@@ -1,5 +1,6 @@
-from .base import BaseResponseModal, Account
-from typing import List, Optional, Any
+from typing import Any, Optional
+
+from .base import Account, BaseResponseModal
 
 
 class AccountByPhoneResponseModal(BaseResponseModal):
@@ -7,7 +8,7 @@ class AccountByPhoneResponseModal(BaseResponseModal):
     Model for the get account by phone response containing a list of accounts and account details.
     """
 
-    accountList: List[Account]
+    accountList: list[Account]
     accountNm: str
     accountNo: str
 

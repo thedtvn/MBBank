@@ -1,4 +1,5 @@
 # type: ignore | ignore since this file originally comes from js translate to python and replicate js behavior
+# ruff: noqa
 import asyncio
 import json
 import math
@@ -31,9 +32,9 @@ class globalThis:
     def __getattribute__(self, item):
         if item == "Object":
             return object
-        elif item == "Array":
+        if item == "Array":
             return list
-        elif item == "Uint8Array":
+        if item == "Uint8Array":
             return bytes
         return object.__getattribute__(self, item)
 
@@ -68,8 +69,8 @@ class GO:
         def loadValue(addr):
             f = self.mem.getFloat64(addr, True)
             if f == 0:
-                return
-            elif not math.isnan(f):
+                return None
+            if not math.isnan(f):
                 return f
             aid = self.mem.getInt32(addr, True)
             return self._values[aid]

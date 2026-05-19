@@ -1,6 +1,6 @@
-from typing import List
-from .base import BaseResponseModal
 from pydantic import BaseModel
+
+from .base import BaseResponseModal
 
 
 class BalanceDTO(BaseModel):
@@ -23,7 +23,7 @@ class BalanceLoyalty(BaseModel):
     fullName: str
     loyaltyAccountStatus: str
     cmt: str
-    balanceDTO: List[BalanceDTO]
+    balanceDTO: list[BalanceDTO]
 
 
 class BalanceLoyaltyResponseModal(BaseResponseModal):
