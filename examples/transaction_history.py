@@ -44,9 +44,7 @@ def main():
             # Let's try to print a few likely fields.
 
             date = getattr(transaction, "transactionDate", "N/A")
-            amount = getattr(transaction, "creditAmount", 0) or getattr(
-                transaction, "debitAmount", 0
-            )
+            amount = int(getattr(transaction, "creditAmount", 0)) or -int(getattr(transaction, "debitAmount", 0))
             description = getattr(transaction, "description", "No description")
 
             print(f"{str(date):<20} | {str(amount):<15} | {description}")

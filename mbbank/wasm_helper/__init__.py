@@ -98,16 +98,9 @@ class GO:
                 else:
                     obj_id = len(self._values)
                 if obj_id >= len(self._values):
-                    self._values.extend(
-                        [undefined for _ in range(obj_id - len(self._values) + 1)]
-                    )
+                    self._values.extend([undefined for _ in range(obj_id - len(self._values) + 1)])
                 if obj_id >= len(self._goRefCounts):
-                    self._goRefCounts.extend(
-                        [
-                            float("inf")
-                            for _ in range(obj_id - len(self._goRefCounts) + 1)
-                        ]
-                    )
+                    self._goRefCounts.extend([float("inf") for _ in range(obj_id - len(self._goRefCounts) + 1)])
                 self._values[obj_id] = v
                 self._goRefCounts[obj_id] = 0
                 self._ids.setdefault(v, obj_id)
@@ -153,10 +146,7 @@ class GO:
         print("exit code:", exitCode)
 
     def importObject(self, imports_type: list[wasmtime.ImportType]):
-        return [
-            wasmtime.Func(self.wasm_store, i.type, getattr(self.go_js, i.name))
-            for i in imports_type
-        ]
+        return [wasmtime.Func(self.wasm_store, i.type, getattr(self.go_js, i.name)) for i in imports_type]
 
     # noinspection PyAttributeOutsideInit
     def run(self, inst):
@@ -201,9 +191,7 @@ class GO:
             self.offset += 8
         wasmMinDataAddr = 4096 + 8192
         if self.offset >= wasmMinDataAddr:
-            raise MemoryError(
-                "total length of command line and environment variables exceeds limit"
-            )
+            raise MemoryError("total length of command line and environment variables exceeds limit")
         self.go_js.run_init()
         self._inst["run"](self.wasm_store, argc, argv)
         if self.exited:
@@ -402,9 +390,7 @@ def wasm_encrypt(wasm_files: bytes, json_data: dict) -> str:
     modun = wasmtime.Module(engine, wasm_files)
     store = wasmtime.Store(engine)
     go_obj = GO(store)
-    instance = wasmtime.Instance(
-        store, modun, imports=go_obj.importObject(modun.imports)
-    )
+    instance = wasmtime.Instance(store, modun, imports=go_obj.importObject(modun.imports))
     run_as_lib = instance.exports(store)
     go_obj.run(run_as_lib)
     return global_this.bder(json.dumps(json_data), "0")
