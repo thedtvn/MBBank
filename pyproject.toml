@@ -14,7 +14,7 @@ dependencies = [
     "Pillow==12.2.0",
     "requests==2.34.2",
     "aiohttp==3.13.5",
-    "wasmtime==44.0.0",
+    "wasmtime==45.0.0",
     "mb-capcha-ocr==0.1.6",
     "pydantic==2.13.4",
 ]
@@ -31,6 +31,6 @@ version = { attr = "mbbank.__version__" }
 [dependency-groups]
 dev = [
     "pdoc==16.0.0", # for documentation generation
-    "ruff==0.15.13", # for linting and formatting
-    "ty==0.0.37" # for type checking
+    "ruff==0.15.15", # for linting and formatting
+    "ty==0.0.40" # for type checking
 ]

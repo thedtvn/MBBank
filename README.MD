@@ -89,7 +89,6 @@ If you find this project helpful, you can support the developer:
     -   Bank: Techcombank
     -   Account Name: NGUYEN DUONG TUAN
     -   Account Number: 9612912060
-    -   Nickname: THEDTVN
 
 ## License
 
