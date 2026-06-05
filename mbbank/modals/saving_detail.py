@@ -32,4 +32,4 @@ class SavingDetail(BaseModel):
 class SavingDetailResponseModal(BaseResponseModal):
     """Saving detail response model."""
 
-    detailSaving: SavingDetail
+    detailSaving: Optional[SavingDetail]

@@ -389,6 +389,7 @@ class MBBank(MBBankBase):
             "https://online.mbbank.com.vn/api/retail_web/saving/getDetail",
             json=json_data,
         )
+        print(data_out)
         return SavingDetailResponseModal.model_validate(data_out, strict=True)
 
     def getLoanList(self) -> LoanListResponseModal:

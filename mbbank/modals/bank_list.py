@@ -22,7 +22,7 @@ class Bank(BaseModel):
     domBankIbps: Optional[str]
     isTransferHO: Optional[str]
     bankNameEN: str
-    bankNameKOR: str
+    bankNameKOR: Optional[str]
 
 
 class BankListResponseModal(BaseResponseModal):
