@@ -77,9 +77,11 @@ transfer_ctx = mb.makeTransferAccountToAccount(
 )
 
 auth_method = get_auth_method(mb)
-auth_code = input(f"Enter the code for {auth_method.name}: ").strip()
 
+# show qr for dotp if the selected auth method is QR code
 qr = qrcode.make(transfer_ctx.get_qr_code())
 qr.show()
+
+auth_code = input(f"Enter the code for {auth_method.name}: ").strip()
 
 print(transfer_ctx.transfer(otp=auth_code, auth_type=auth_method))
