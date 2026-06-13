@@ -7,6 +7,7 @@ import requests
 
 from mbbank.base import MBBankBase
 from mbbank.capcha_ocr import CapchaProcessing
+from mbbank.encryption_backend import EncryptionBackend
 from mbbank.errors import (
     BankNotFoundError,
     CapchaError,
@@ -16,6 +17,7 @@ from mbbank.errors import (
 from mbbank.modals import (
     AccountByPhoneResponseModal,
     AccountNameResponseModal,
+    AccountTransfer,
     ATMAccountNameResponseModal,
     ATMCardIDResponseModal,
     BalanceLoyaltyResponseModal,
@@ -23,6 +25,8 @@ from mbbank.modals import (
     Bank,
     BankListResponseModal,
     BeneficiaryListResponseModal,
+    BulkPaymentDetailResponseModal,
+    BulkPaymentStatusResponseModal,
     CardListResponseModal,
     CardTransactionsResponseModal,
     InterestRateResponseModal,
@@ -34,8 +38,8 @@ from mbbank.modals import (
     TransactionHistoryResponseModal,
     UserInfoResponseModal,
 )
-from mbbank.wasm_helper import wasm_encrypt
 
+from .bulk_transfer import BulkTransferContext
 from .transfer import TransferContext
 
 
@@ -51,6 +55,7 @@ class MBBank(MBBankBase):
         password (str): MBBank Account Password
         proxy (str, optional): Proxy url. Example: "http://127.0.0.1:8080". Defaults to None.
         ocr_class (CapchaProcessing, optional): instance of CapchaProcessing class. Defaults to CapchaOCR().
+        encryption_backend (EncryptionBackend, optional): encryption backend to encrypt request data, this will affect the login flow, if you have problem with login flow try to change this value.
         retry_times (int, optional): number of retry times for capcha processing. Defaults to 30 ( worst case ).
         timeout (Union[float, Tuple[float, float]], optional): request timeout in seconds or (connect timeout, read timeout) or None for no timeout. Defaults to None.
     """
@@ -62,6 +67,7 @@ class MBBank(MBBankBase):
         password: str,
         proxy: typing.Optional[str] = None,
         ocr_class: typing.Optional[CapchaProcessing] = None,
+        encryption_backend: typing.Optional[EncryptionBackend] = None,
         retry_times: int = 30,
         timeout: float | tuple[float, float] | None = None,
     ):
@@ -69,6 +75,7 @@ class MBBank(MBBankBase):
             username=username,
             password=password,
             ocr_class=ocr_class,
+            encryption_backend=encryption_backend,
             retry_times=retry_times,
         )
         if proxy is not None:
@@ -98,8 +105,7 @@ class MBBank(MBBankBase):
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             if encrypt:
-                wasm_bytes = self._get_wasm_file()
-                data_encrypt = wasm_encrypt(wasm_bytes, json_data)
+                data_encrypt = self.encryption_backend._encrypt(json_data)
                 json_data = {"dataEnc": data_encrypt}
             with requests.post(
                 url,
@@ -113,7 +119,8 @@ class MBBank(MBBankBase):
                 data_out = r.json()
             if data_out["result"] is None:
                 self.getBalance()
-            elif data_out["result"]["ok"]:
+            # Some endpoints return {"result": {"ok": true}}, others return {"result": {"result": true}}
+            elif data_out["result"].get("ok", False) or data_out["result"].get("result", False):
                 data_out.pop("result", None)
                 break
             elif data_out["result"]["responseCode"] == "GW200":
@@ -121,17 +128,6 @@ class MBBank(MBBankBase):
             else:
                 raise MBBankAPIError(data_out["result"])
         return data_out
-
-    def _get_wasm_file(self):
-        if self._wasm_cache is not None:
-            return self._wasm_cache
-        file_data = requests.get(
-            "https://online.mbbank.com.vn/assets/wasm/main.wasm",
-            proxies=self.proxy,
-            timeout=self.timeout,
-        ).content
-        self._wasm_cache = file_data
-        return file_data
 
     def get_capcha_image(self) -> bytes:
         """
@@ -181,8 +177,7 @@ class MBBank(MBBankBase):
             "deviceIdCommon": self.deviceIdCommon,
             "ibAuthen2faString": self.FPR,
         }
-        wasm_bytes = self._get_wasm_file()
-        data_encrypt = wasm_encrypt(wasm_bytes, payload)
+        data_encrypt = self.encryption_backend._encrypt(payload)
         with requests.post(
             "https://online.mbbank.com.vn/api/retail_web/internetbanking/v2.0/doLogin",
             headers=self.HEADERS_DEFAULT,
@@ -201,17 +196,8 @@ class MBBank(MBBankBase):
             return
         raise MBBankAPIError(data_out["result"])
 
-    def getServiceToken(self) -> ServiceTokenResponseModal:
-        """
-        Get service token for external service usage
-
-        Returns:
-            success (ServiceTokenResponseModal): service token
-        """
-        if self._userinfo is None:
-            self._authenticate()
-        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
-        return ServiceTokenResponseModal.model_validate(data_out, strict=True)
+    def _verify_biometric_check(self):
+        self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
 
     def _authenticate(self):
         try_count = 0
@@ -230,8 +216,17 @@ class MBBank(MBBankBase):
                 raise e  # other error raise up
         raise CapchaError(f"Exceeded maximum retry times for capcha processing ({self.retry_times})")
 
-    def _verify_biometric_check(self):
-        self._req("https://online.mbbank.com.vn/api/retail-go-ekycms/v1.0/verify-biometric-nfc-transaction")
+    def getServiceToken(self) -> ServiceTokenResponseModal:
+        """
+        Get service token for external service usage
+
+        Returns:
+            success (ServiceTokenResponseModal): service token
+        """
+        if self._userinfo is None:
+            self._authenticate()
+        data_out = self._req("https://online.mbbank.com.vn/api/retail_web/common/getServiceToken")
+        return ServiceTokenResponseModal.model_validate(data_out, strict=True)
 
     def getTransactionAccountHistory(
         self,
@@ -592,7 +587,7 @@ class MBBank(MBBankBase):
         )
         return ATMAccountNameResponseModal.model_validate(data_out, strict=True)
 
-    def makeTransferAccountToAccount(
+    def makeTransfer(
         self,
         *,
         src_account: str,
@@ -620,6 +615,47 @@ class MBBank(MBBankBase):
             message=message,
         )
         return context.start()
+
+    def makeBulkTransfer(
+        self,
+        *,
+        dest_accounts: list[AccountTransfer],
+        description: str,
+        src_account: str,
+        bulk_file_name: str = "Chuyenkhoantheobangke.xlsx",
+    ) -> "BulkTransferContext":
+        """
+        Make bulk transfer from src_account to multiple dest_accounts
+        Note: If you open an account online, you need to verify with MBBank staff to use this feature, please go to the nearest MBBank branch to verify.
+
+        Args:
+            dest_accounts (list[AccountTransfer]): list of destination account info for bulk transfer
+            description (str): description for the transfer, this will be the description of the bulk transfer
+            src_account (str): Source account number
+            bulk_file_name (str): bulk file name for the transfer file, this will log into bulk transfer detail, default to "Chuyenkhoantheobangke.xlsx"
+        Returns:
+            BulkTransferContext: bulk transfer context
+        """
+        context = BulkTransferContext(
+            self,
+            dest_accounts=dest_accounts,
+            description=description,
+            src_account=src_account,
+            bulk_file_name=bulk_file_name,
+        )
+        return context.start()
+
+    def getBulkPaymentStatus(self) -> BulkPaymentStatusResponseModal:
+        data_out = self._req("https://online.mbbank.com.vn/api/retail-bulkpaymentms/getBulkPaymentStatus")
+        return BulkPaymentStatusResponseModal.model_validate(data_out, strict=True)
+
+    def getBulkPaymentDetail(self, bulk_id: str) -> BulkPaymentDetailResponseModal:
+        json_data = {"bulkId": bulk_id}
+        data_out = self._req(
+            "https://online.mbbank.com.vn/api/retail-bulkpaymentms/getBulkPaymentDetail",
+            json=json_data,
+        )
+        return BulkPaymentDetailResponseModal.model_validate(data_out, strict=True)
 
     def userinfo(self) -> UserInfoResponseModal:
         """

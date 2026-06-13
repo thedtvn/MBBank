@@ -2,6 +2,7 @@ import datetime
 import typing
 
 from mbbank.capcha_ocr import CapchaOCR, CapchaProcessing
+from mbbank.encryption_backend import EncryptionBackend, NativeBackend
 
 
 class MBBankBase:
@@ -26,7 +27,7 @@ class MBBankBase:
         "Authorization": "Basic RU1CUkVUQUlMV0VCOlNEMjM0ZGZnMzQlI0BGR0AzNHNmc2RmNDU4NDNm",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
         "Origin": "https://online.mbbank.com.vn",
-        "Referer": "https://online.mbbank.com.vn/pl/login?returnUrl=%2F",
+        "Referer": "https://online.mbbank.com.vn/",
         "App": "MB_WEB",
         "Sec-Ch-Ua": '"Not.A/Brand";v="8", "Chromium";v="134", "Google Chrome";v="134"',
         "Sec-Ch-Ua-Mobile": "?0",
@@ -42,16 +43,21 @@ class MBBankBase:
         username: str,
         password: str,
         ocr_class: typing.Optional[CapchaProcessing] = None,
+        encryption_backend: typing.Optional[EncryptionBackend] = None,
         retry_times: int = 30,
     ):
         self._userid = username
         self._password = password
-        self._wasm_cache: typing.Optional[bytes] = None
         self.ocr_class: CapchaProcessing = CapchaOCR()
         if ocr_class is not None:
             if not isinstance(ocr_class, CapchaProcessing):
                 raise ValueError("ocr_class must be instance of CapchaProcessing")
             self.ocr_class = ocr_class
+        self.encryption_backend = NativeBackend()
+        if encryption_backend is not None:
+            if not isinstance(encryption_backend, EncryptionBackend):
+                raise ValueError("encryption_backend must be instance of EncryptionBackend")
+            self.encryption_backend = encryption_backend
         self.sessionId: typing.Optional[str] = None
         self._userinfo: typing.Optional[dict] = None
         self._temp: dict = {}

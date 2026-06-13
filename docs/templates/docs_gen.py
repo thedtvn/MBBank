@@ -21,11 +21,6 @@ def copy_preload(path_out: Path) -> None:
 def generate_docs(is_read_the_docs: bool = False) -> None:
     modules = [
         "mbbank",
-        "mbbank.capcha_ocr",
-        "mbbank.sync",
-        "mbbank.aio",
-        "mbbank.modals",
-        "mbbank.errors",
     ]
     output_dir = Path("docs" if not is_read_the_docs else os.getenv("READTHEDOCS_OUTPUT", ".") + "/html/")
     pdoc.render.configure(
@@ -33,6 +28,7 @@ def generate_docs(is_read_the_docs: bool = False) -> None:
         show_source=True,
         include_undocumented=False,
         template_directory=Path("docs/templates"),
+        footer_text="This project is not affiliated with MBBank. Use it responsibly and at your own risk.",
     )
     pdoc.pdoc(*modules, output_directory=output_dir)
     copy_preload(output_dir)

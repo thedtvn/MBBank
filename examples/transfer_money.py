@@ -1,15 +1,10 @@
 # requires 'qrcode[pil]' package for QR code generation
-import qrcode  # ty: ignore[unresolved-import]
+import qrcode  # ty: ignore
 
 import mbbank
 
-username = input("Enter your username: ")
-password = input("Enter your password: ")
 
-mb = mbbank.MBBank(username=username, password=password)
-
-
-def get_auth_method(mb: mbbank.MBBank):
+def get_auth_method(transfer_ctx: mbbank.TransferContext):
     """
     Prompt user to select authentication method for transfer.
     """
@@ -61,27 +56,29 @@ def get_src_account(mb: mbbank.MBBank):
     acc_num = int(input("Select the account number to transfer from: ")) - 1
     return accounts[acc_num].acctNo
 
+def main():
+    username = input("Enter your username: ")
+    password = input("Enter your password: ")
 
-src_account = get_src_account(mb)
-bank_to = get_bank_to(mb)
-to_acc = input("Enter the recipient account number or nickname: ")
-amount = int(input("Enter the amount to transfer: "))
-message = input("Enter a message for the transfer: ")
+    mb = mbbank.MBBank(username=username, password=password)
 
-transfer_ctx = mb.makeTransferAccountToAccount(
-    src_account=src_account,
-    dest_account=to_acc,
-    bank_code=bank_to.bankCode,
-    amount=amount,
-    message=message,
-)
+    src_account = get_src_account(mb)
+    bank_to = get_bank_to(mb)
+    to_acc = input("Enter the recipient account number or nickname: ")
+    amount = int(input("Enter the amount to transfer: "))
+    message = input("Enter a message for the transfer: ")
 
-auth_method = get_auth_method(mb)
+    transfer_ctx = mb.makeTransfer(src_account=src_account, dest_account=to_acc, bank_code=bank_to.bankCode, amount=amount,
+                                   message=message)
 
-# show qr for dotp if the selected auth method is QR code
-qr = qrcode.make(transfer_ctx.get_qr_code())
-qr.show()
+    auth_method = get_auth_method(transfer_ctx)
 
-auth_code = input(f"Enter the code for {auth_method.name}: ").strip()
+    # show qr for dotp if the selected auth method is QR code
+    qr = qrcode.make(transfer_ctx.get_qr_code())
+    qr.show()
 
-print(transfer_ctx.transfer(otp=auth_code, auth_type=auth_method))
+    auth_code = input(f"Enter the code for {auth_method.name}: ").strip()
+
+    print(transfer_ctx.transfer(otp=auth_code, auth_type=auth_method))
+if __name__ == "__main__":
+    main()

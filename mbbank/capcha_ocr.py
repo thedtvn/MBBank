@@ -1,3 +1,4 @@
+import asyncio
 import io
 from typing import Optional
 
@@ -31,6 +32,18 @@ class CapchaProcessing:
         """
         raise NotImplementedError("process_image is not implemented")
 
+    async def process_image_async(self, img: bytes) -> str:
+        """
+        Async process image and return text
+
+        Args:
+            img (bytes): image input as bytes
+
+        Returns:
+            success (str): text from image
+        """
+        raise NotImplementedError("process_image_async is not implemented")
+
 
 class CapchaOCR(CapchaProcessing):
     """
@@ -38,7 +51,7 @@ class CapchaOCR(CapchaProcessing):
     https://pypi.org/project/mb-capcha-ocr/
 
     Args:
-        model_path (str, optional): path to model file
+        model_path (str, optional): path to a model file
     """
 
     def __init__(self, model_path: Optional[str] = None):
@@ -58,3 +71,15 @@ class CapchaOCR(CapchaProcessing):
         """
         image = Image.open(io.BytesIO(img))
         return self.model.predict(image)
+
+    async def process_image_async(self, img: bytes) -> str:
+        """
+        Async process image and return text
+
+        Args:
+            img (bytes): image input as bytes
+
+        Returns:
+            success (str): text from image
+        """
+        return await asyncio.to_thread(self.process_image, img)

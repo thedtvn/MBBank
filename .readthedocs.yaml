@@ -17,5 +17,5 @@ build:
     - gcc
   commands:
     - pip install pdoc
-    - pip install .
-    - python docs_gen.py --rtfd
+    - pip install .[wasm]
+    - python docs/templates/docs_gen.py --rtfd
