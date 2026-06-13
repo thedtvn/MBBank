@@ -36,12 +36,6 @@ or harmful.
 This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing
 the community in public spaces.
 
-## Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1,
-available
-at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
-
 ## Disclaimer
 
 This project is not affiliated with MBBank. Use it responsibly and at your own risk.
