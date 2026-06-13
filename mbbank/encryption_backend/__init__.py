@@ -19,8 +19,14 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
+__all__ = [
+    "EncryptionBackend",
+    "NativeBackend",
+    "WASMBackend",
+]  # use for auto-complete and type hinting
+
 __all__ = (
     ["EncryptionBackend", "NativeBackend", "WASMBackend"]
     if WASM_BACKEND_AVAILABLE
     else ["EncryptionBackend", "NativeBackend"]
-)
+)  # use for import *
