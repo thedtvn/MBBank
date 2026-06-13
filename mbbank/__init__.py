@@ -136,7 +136,7 @@ More examples can be found on the [GitHub repository](https://github.com/thedtvn
 """
 
 # Define version first to avoid circular imports
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 import mbbank.aio as aio
 import mbbank.base as base
