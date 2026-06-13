@@ -20,7 +20,7 @@ class TransferContextAsync(TransferContextBase):
     Async transfer context manager for account to account transfer
 
     Attributes:
-        to_account_name (AccountNameResponseModal or None): destination account name info, this available when call makeTransferAccountToAccount
+        to_account_name (AccountNameResponseModal or None): destination account name info, this available when call makeTransfer
         refNo (str or None): reference number
         timestamp (int or None): timestamp
         transaction_authen (TransactionAuthen or None): transaction authentication info
@@ -47,7 +47,7 @@ class TransferContextAsync(TransferContextBase):
         """
         Initialize async transfer context
 
-        Note: This for advance flow only, normal flow not need to call this class directly use makeTransferAccountToAccount instead.
+        Note: This for advance flow only, normal flow not need to call this class directly use makeTransfer instead.
 
         Args:
             mbbank_instance (MBBankAsync): MBBankAsync instance
@@ -234,7 +234,7 @@ class TransferContextAsync(TransferContextBase):
         Start transfer process
         This will verify transfer info and prepare for authentication
 
-        Note: This for advance flow only, normal flow not need to call this method directly use makeTransferAccountToAccount instead.
+        Note: This for advance flow only, normal flow not need to call this method directly use makeTransfer instead.
 
         Returns:
             success (TransferContextAsync): self instance for chaining

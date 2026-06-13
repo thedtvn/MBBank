@@ -23,7 +23,7 @@ class TransferContext(TransferContextBase):
     Transfer context manager for account to account transfer
 
     Attributes:
-        to_account_name (AccountNameResponseModal or None): destination account name info, this available when call makeTransferAccountToAccount
+        to_account_name (AccountNameResponseModal or None): destination account name info, this available when call makeTransfer
         refNo (str or None): reference number
         timestamp (int or None): timestamp
         transaction_authen (TransactionAuthenResponseModal or None): transaction authentication info
