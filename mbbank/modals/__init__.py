@@ -18,6 +18,14 @@ from .beneficiary_list import (
     BeneficiaryTransfer,
     SavedBeneficiaryListResponseModal,
 )
+from .bulk_transfer import (
+    AccountTransfer,
+    BulkPaymentDetailItemModel,
+    BulkPaymentDetailResponseModal,
+    BulkPaymentStatusResponseModal,
+    BulkTransferItemModel,
+    BulkTransferResponseModal,
+)
 from .card_list import Card, CardListResponseModal
 from .card_transactions import CardTransaction, CardTransactionsResponseModal
 from .external_service import ATMCardIDResponseModal
@@ -53,6 +61,7 @@ __all__ = [
     "Account",
     "AccountByPhoneResponseModal",
     "AccountNameResponseModal",
+    "AccountTransfer",
     "AddInfo",
     "AuthListItem",
     "AuthTransferResponseModal",
@@ -67,6 +76,11 @@ __all__ = [
     "BeneficiaryPayment",
     "BeneficiaryTransfer",
     "BiometricAuthDeviceModel",
+    "BulkPaymentDetailItemModel",
+    "BulkPaymentDetailResponseModal",
+    "BulkPaymentStatusResponseModal",
+    "BulkTransferItemModel",
+    "BulkTransferResponseModal",
     "Card",
     "CardListResponseModal",
     "CardTransaction",

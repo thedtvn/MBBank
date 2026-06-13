@@ -7,8 +7,12 @@ import os
 import time
 import traceback
 from contextvars import ContextVar
-
 import wasmtime
+
+import aiohttp
+import requests
+
+from mbbank.encryption_backend import EncryptionBackend
 
 from .helper import Memory, dict_warper, fs_object, process_object
 
@@ -372,29 +376,60 @@ class GOJS:
         pass
 
 
-# All instances shared the same wasm module
-def wasm_encrypt(wasm_files: bytes, json_data: dict) -> str:
+class WASMBackend(EncryptionBackend):
     """
-    Encrypt json_data using the provided wasm_files.
-
-    Args:
-        wasm_files (bytes): The WebAssembly module in bytes.
-        json_data (dict): The JSON data to be encrypted.
-
-    Returns:
-        str: The encrypted JSON data as a string.
-
+    WASM encryption backend using wasmtime to emulate the WebAssembly downloaded from the MB Bank website.
     """
-    if getattr(global_this, "bder", None) is not None:
+
+    wasm_files: bytes
+
+    def _wasm_encrypt(self, json_data: dict) -> str:
+        if getattr(global_this, "bder", None) is not None:
+            return global_this.bder(json.dumps(json_data), "0")
+        engine = wasmtime.Engine()
+        modun = wasmtime.Module(engine, self.wasm_files)
+        store = wasmtime.Store(engine)
+        go_obj = GO(store)
+        instance = wasmtime.Instance(store, modun, imports=go_obj.importObject(modun.imports))
+        run_as_lib = instance.exports(store)
+        go_obj.run(run_as_lib)
         return global_this.bder(json.dumps(json_data), "0")
-    engine = wasmtime.Engine()
-    modun = wasmtime.Module(engine, wasm_files)
-    store = wasmtime.Store(engine)
-    go_obj = GO(store)
-    instance = wasmtime.Instance(store, modun, imports=go_obj.importObject(modun.imports))
-    run_as_lib = instance.exports(store)
-    go_obj.run(run_as_lib)
-    return global_this.bder(json.dumps(json_data), "0")
 
+    async def setup_async(self):
+        """
+        Async setup method to load the wasm file content into memory.
+        """
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://online.mbbank.com.vn/assets/wasm/main.wasm") as response:
+                self.wasm_files = await response.read()
 
-__all__ = ["wasm_encrypt"]
+    def setup(self):
+        """
+        Sync setup method to load the wasm file content into memory.
+        """
+        response = requests.get("https://online.mbbank.com.vn/assets/wasm/main.wasm")
+        self.wasm_files = response.content
+
+    async def encrypt_async(self, json_data: dict) -> str:
+        """
+        Async method to encrypt JSON data using the wasm encryption function.
+
+        Args:
+            json_data (dict): The JSON data to be encrypted.
+
+        Returns:
+            str: The encrypted JSON data as a string.
+        """
+        return await asyncio.to_thread(self._wasm_encrypt, json_data)
+
+    def encrypt(self, json_data: dict) -> str:
+        """
+        Sync method to encrypt JSON data using the wasm encryption function.
+
+        Args:
+            json_data (dict): The JSON data to be encrypted.
+
+        Returns:
+            str: The encrypted JSON data as a string.
+        """
+        return self._wasm_encrypt(json_data)

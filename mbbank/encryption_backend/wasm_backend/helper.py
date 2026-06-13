@@ -2,7 +2,6 @@
 import dataclasses
 import json
 import struct
-
 import wasmtime
 
 
@@ -18,12 +17,6 @@ class Memory:
     def write(self, value, start_address):
         need = start_address + len(value)
         if self.mem.size(self.store_wasm) * self.wasm_page_size < need:
-            print(
-                "need",
-                need,
-                "size",
-                self.mem.size(self.store_wasm) * self.wasm_page_size,
-            )
             if self.wasm_page_size > need:
                 grow_page = 1
             else:

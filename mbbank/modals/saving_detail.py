@@ -16,8 +16,8 @@ class SavingDetail(BaseModel):
     currency: str
     principalAmount: str
     principalAmountEquiv: str
-    startDate: str
-    maturityDate: str
+    startDate: Optional[str]
+    maturityDate: Optional[str]
     interestRate: str
     tenor: str
     outstandingInterest: str

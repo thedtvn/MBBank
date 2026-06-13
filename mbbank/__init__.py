@@ -4,16 +4,6 @@ MBBank Python SDK
 
 A lightweight Python client for the MBBank API.
 
-Features
---------
-- **Async API** – [mbbank.aio](./mbbank/aio.html)
-- **Sync API** – [mbbank.sync](./mbbank/sync.html)
-- **Image Processing** – [mbbank.capcha_ocr](./mbbank/capcha_ocr.html)
-- **Response Models** – [mbbank.modals](./mbbank/modals.html)
-- **Errors** – [mbbank.errors](./mbbank/errors.html)
-
-The package exposes the most commonly used classes at the top level for convenience.
-
 Examples
 --------
 
@@ -145,17 +135,37 @@ print("Card list: ", mb.getCardList())
 More examples can be found on the [GitHub repository](https://github.com/thedtvn/MBBank/tree/main/examples).
 """
 
-from .aio import MBBankAsync, TransferContextAsync
+# Define version first to avoid circular imports
+__version__ = "0.3.1"
+
+import mbbank.aio as aio
+import mbbank.base as base
+import mbbank.capcha_ocr as capcha_ocr
+import mbbank.encryption_backend as encryption_backend
+import mbbank.errors as errors
+import mbbank.modals as modals
+import mbbank.sync as sync
+
+from .aio import BulkTransferContextAsync, MBBankAsync, TransferContextAsync
 from .capcha_ocr import CapchaOCR, CapchaProcessing
-from .sync import MBBank, TransferContext
+from .sync import BulkTransferContext, MBBank, TransferContext
 
 __all__ = [
+    "BulkTransferContext",
+    "BulkTransferContextAsync",
     "CapchaOCR",
     "CapchaProcessing",
     "MBBank",
     "MBBankAsync",
     "TransferContext",
     "TransferContextAsync",
+    "__version__",
+    # Export submodules for documentation purposes
+    "aio",
+    "base",
+    "capcha_ocr",
+    "encryption_backend",
+    "errors",
+    "modals",
+    "sync",
 ]
-
-__version__ = "0.3.1"

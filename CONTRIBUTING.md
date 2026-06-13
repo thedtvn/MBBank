@@ -75,3 +75,7 @@ Found a vulnerability? See [SECURITY.md](SECURITY.md) for instructions.
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+## Disclaimer
+
+This project is not affiliated with MBBank. Use it responsibly and at your own risk.

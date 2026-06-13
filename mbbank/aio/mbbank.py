@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import concurrent.futures
 import datetime
 import hashlib
 import typing
@@ -9,6 +8,7 @@ import aiohttp
 
 from mbbank.base import MBBankBase
 from mbbank.capcha_ocr import CapchaProcessing
+from mbbank.encryption_backend import EncryptionBackend
 from mbbank.errors import (
     BankNotFoundError,
     CapchaError,
@@ -18,6 +18,7 @@ from mbbank.errors import (
 from mbbank.modals import (
     AccountByPhoneResponseModal,
     AccountNameResponseModal,
+    AccountTransfer,
     ATMAccountNameResponseModal,
     ATMCardIDResponseModal,
     BalanceLoyaltyResponseModal,
@@ -25,6 +26,8 @@ from mbbank.modals import (
     Bank,
     BankListResponseModal,
     BeneficiaryListResponseModal,
+    BulkPaymentDetailResponseModal,
+    BulkPaymentStatusResponseModal,
     CardListResponseModal,
     CardTransactionsResponseModal,
     InterestRateResponseModal,
@@ -36,8 +39,8 @@ from mbbank.modals import (
     TransactionHistoryResponseModal,
     UserInfoResponseModal,
 )
-from mbbank.wasm_helper import wasm_encrypt
 
+from .bulk_transfer import BulkTransferContextAsync
 from .transfer import TransferContextAsync
 
 
@@ -58,8 +61,6 @@ class MBBankAsync(MBBankBase):
         (connect timeout, read timeout) or None for no timeout. Defaults to None.
     """
 
-    THREAD_POOL = concurrent.futures.ThreadPoolExecutor()
-
     def __init__(
         self,
         *,
@@ -67,6 +68,7 @@ class MBBankAsync(MBBankBase):
         password: str,
         proxy: typing.Optional[str] = None,
         ocr_class: typing.Optional[CapchaProcessing] = None,
+        encryption_backend: typing.Optional[EncryptionBackend] = None,
         retry_times: int = 30,
         timeout: float | tuple[float, float] | None = None,
     ):
@@ -74,6 +76,7 @@ class MBBankAsync(MBBankBase):
             username=username,
             password=password,
             ocr_class=ocr_class,
+            encryption_backend=encryption_backend,
             retry_times=retry_times,
         )
         if proxy is not None:
@@ -90,20 +93,6 @@ class MBBankAsync(MBBankBase):
 
     def _create_session(self) -> aiohttp.ClientSession:
         return aiohttp.ClientSession(timeout=self.timeout)
-
-    async def _get_wasm_file(self):
-        if self._wasm_cache is not None:
-            return self._wasm_cache
-        async with (
-            self._create_session() as s,
-            s.get(
-                "https://online.mbbank.com.vn/assets/wasm/main.wasm",
-                headers=self.HEADERS_DEFAULT,
-                proxy=self.proxy,
-            ) as r,
-        ):
-            self._wasm_cache = await r.read()
-        return self._wasm_cache
 
     async def get_capcha_image(self) -> bytes:
         """
@@ -153,10 +142,7 @@ class MBBankAsync(MBBankBase):
             "deviceIdCommon": self.deviceIdCommon,
             "ibAuthen2faString": self.FPR,
         }
-        wasm_bytes = await self._get_wasm_file()
-        data_encrypt = await asyncio.get_running_loop().run_in_executor(
-            self.THREAD_POOL, wasm_encrypt, wasm_bytes, payload
-        )
+        data_encrypt = await self.encryption_backend._encrypt_async(payload)
         async with (
             self._create_session() as s,
             s.post(
@@ -187,9 +173,7 @@ class MBBankAsync(MBBankBase):
             self._userinfo = None
             self.sessionId = None
             img_bytes = await self.get_capcha_image()
-            text = await asyncio.get_event_loop().run_in_executor(
-                self.THREAD_POOL, self.ocr_class.process_image, img_bytes
-            )
+            text = await self.ocr_class.process_image_async(img_bytes)
             try:
                 await self.login(text)
                 return
@@ -219,9 +203,7 @@ class MBBankAsync(MBBankBase):
             headers["RefNo"] = rid
             headers["DeviceId"] = self.deviceIdCommon
             if encrypt:
-                wasm_bytes = await self._get_wasm_file()
-                loop = asyncio.get_running_loop()
-                data_encrypt = await loop.run_in_executor(self.THREAD_POOL, wasm_encrypt, wasm_bytes, json_data)
+                data_encrypt = await self.encryption_backend._encrypt_async(json_data)
                 json_data = {"dataEnc": data_encrypt}
             async with (
                 self._create_session() as s,
@@ -238,7 +220,8 @@ class MBBankAsync(MBBankBase):
                 data_out = await r.json()
             if data_out["result"] is None:
                 await self.getBalance()
-            elif data_out["result"]["ok"]:
+            # Some endpoints return {"result": {"ok": true}}, others return {"result": {"result": true}}
+            elif data_out["result"].get("ok", False) or data_out["result"].get("result", False):
                 data_out.pop("result", None)
                 break
             elif data_out["result"]["responseCode"] == "GW200":
@@ -630,7 +613,48 @@ class MBBankAsync(MBBankBase):
             await self._authenticate()
         return UserInfoResponseModal.model_validate(self._userinfo, strict=True)
 
-    async def makeTransferAccountToAccount(
+    async def makeBulkTransfer(
+        self,
+        *,
+        dest_accounts: list[AccountTransfer],
+        description: str,
+        src_account: str,
+        bulk_file_name: str = "Chuyenkhoantheobangke.xlsx",
+    ) -> "BulkTransferContextAsync":
+        """
+        Make bulk transfer from src_account to multiple dest_accounts
+        Note: If you open an account online, you need to verify with MBBank staff to use this feature, please go to the nearest MBBank branch to verify.
+
+        Args:
+            dest_accounts (list[AccountTransfer]): list of destination account info for bulk transfer
+            description (str): description for the transfer, this will be the description of the bulk transfer
+            src_account (str): Source account number
+            bulk_file_name (str): bulk file name for the transfer file, this will log into bulk transfer detail, default to "Chuyenkhoantheobangke.xlsx"
+        Returns:
+            BulkTransferContextAsync: bulk transfer context
+        """
+        context = BulkTransferContextAsync(
+            self,
+            dest_accounts=dest_accounts,
+            description=description,
+            src_account=src_account,
+            bulk_file_name=bulk_file_name,
+        )
+        return await context.start()
+
+    async def getBulkPaymentStatus(self) -> BulkPaymentStatusResponseModal:
+        data_out = await self._req("https://online.mbbank.com.vn/api/retail-bulkpaymentms/getBulkPaymentStatus")
+        return BulkPaymentStatusResponseModal.model_validate(data_out, strict=True)
+
+    async def getBulkPaymentDetail(self, bulk_id: str) -> BulkPaymentDetailResponseModal:
+        json_data = {"bulkId": bulk_id}
+        data_out = await self._req(
+            "https://online.mbbank.com.vn/api/retail-bulkpaymentms/getBulkPaymentDetail",
+            json=json_data,
+        )
+        return BulkPaymentDetailResponseModal.model_validate(data_out, strict=True)
+
+    async def makeTransfer(
         self,
         *,
         src_account: str,
