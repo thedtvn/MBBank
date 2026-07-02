@@ -11,7 +11,7 @@ authors = [{ name = "The DT", email = "duongtuan30306@gmail.com" }]
 license = "MIT"
 
 dependencies = [
-    "Pillow==12.2.0",
+    "Pillow==12.3.0",
     "requests==2.34.2",
     "aiohttp==3.14.1",
     "mb-capcha-ocr==0.1.6",
