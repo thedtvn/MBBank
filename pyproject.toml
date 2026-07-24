@@ -37,5 +37,5 @@ version = { attr = "mbbank.__version__" }
 dev = [
     "pdoc==16.0.0", # for documentation generation
     "ruff==0.15.22", # for linting and formatting
-    "ty==0.0.62" # for type checking
+    "ty==0.0.63" # for type checking
 ]
