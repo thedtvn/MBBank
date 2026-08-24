@@ -21,7 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 wasm = [
-    "wasmtime==47.0.1"
+    "wasmtime==48.0.0"
 ]
 
 [project.urls]
